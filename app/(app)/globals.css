@@ -1,8 +1,11 @@
-@import "../../node_modules/tailwindcss/dist/lib.d.mts";
+@import "tailwindcss";
+@import "@radix-ui/themes/styles.css";
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --font-geist-sans: "Geist Sans", sans-serif;
+  --font-geist-mono: "Geist Mono", monospace;
 }
 
 @theme inline {
