@@ -1,5 +1,5 @@
 import { createTRPCRouter } from '../init';
-// import { tenantsRouter } from '@/modules/tenants/server/procedures';
+import { tenantsRouter } from '@/modules/tenants/server/procedures';
 // import { unitsRouter } from "@/modules/units/server/procedures";
 // import { tagsRouter } from "@/modules/tags/server/procedures";
 // import { attractionsRouter } from "@/modules/attractions/server/procedures";
@@ -8,8 +8,8 @@ import { createTRPCRouter } from '../init';
 // import { peakseasonsRouter } from "@/modules/peakseasons/server/procedures";
 
 export const appRouter = createTRPCRouter({
+    tenants: tenantsRouter,
     // tags: tagsRouter,
-    // tenants: tenantsRouter,
     // units: unitsRouter,
     // attractions: attractionsRouter,
     // reservations: reservationsRouter,

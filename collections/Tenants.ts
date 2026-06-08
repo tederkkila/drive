@@ -1,4 +1,11 @@
 import type { CollectionConfig, Field } from 'payload'
+import {
+    lexicalEditor,
+    FixedToolbarFeature,
+    HeadingFeature,
+    OrderedListFeature,
+    UnorderedListFeature,
+} from '@payloadcms/richtext-lexical'
 
 export const Tenants: CollectionConfig = {
     slug: 'tenants',
@@ -13,7 +20,6 @@ export const Tenants: CollectionConfig = {
             name: "name",
             required: true,
             type: "text",
-            label: "Location Name",
             admin: {
                 description: "This is the name of the Organization",
             },
@@ -43,6 +49,24 @@ export const Tenants: CollectionConfig = {
             name: 'favicon',
             type: 'upload',
             relationTo: 'media', // Points to your Payload media collection
+        },
+        {
+            name: "content",
+            type: "richText",
+            admin: {
+                description: "This is the description of the location",
+            },
+            editor: lexicalEditor({
+                features: ({ defaultFeatures }) => [
+                    ...defaultFeatures,
+                    // Add a fixed toolbar
+                    FixedToolbarFeature(),
+                    // Add custom features
+                    HeadingFeature({}),
+                    OrderedListFeature(),
+                    UnorderedListFeature(),
+                ],
+            }),
         },
     ] as Field[],
 }

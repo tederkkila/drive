@@ -209,6 +209,8 @@ export interface Team {
   tenant?: (string | null) | Tenant;
   name: string;
   slug: string;
+  level: string;
+  abbreviation: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -221,6 +223,11 @@ export interface Game {
   tenant?: (string | null) | Tenant;
   name: string;
   slug: string;
+  date: string;
+  homeTeam: string | Team;
+  awayTeam: string | Team;
+  homeScore?: number | null;
+  awayScore?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -231,8 +238,35 @@ export interface Game {
 export interface Drive {
   id: string;
   tenant?: (string | null) | Tenant;
-  name: string;
-  slug: string;
+  game: string | Game;
+  possessingTeam: string | Team;
+  driveNumber: number;
+  startFieldPosition: string;
+  result?: string | null;
+  plays?:
+    | {
+        playNumber: number;
+        quarter: number;
+        down: number;
+        yardsToGo: number;
+        description: string;
+        yardsGained: number;
+        playType?:
+          | (
+              | 'run'
+              | 'pass'
+              | 'punt'
+              | 'field_goal'
+              | 'penalty'
+              | 'interception'
+              | 'fumble_recovered'
+              | 'fumble_lost'
+              | 'turnover_on_downs'
+            )
+          | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -412,6 +446,8 @@ export interface TeamsSelect<T extends boolean = true> {
   tenant?: T;
   name?: T;
   slug?: T;
+  level?: T;
+  abbreviation?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -423,6 +459,11 @@ export interface GamesSelect<T extends boolean = true> {
   tenant?: T;
   name?: T;
   slug?: T;
+  date?: T;
+  homeTeam?: T;
+  awayTeam?: T;
+  homeScore?: T;
+  awayScore?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -432,8 +473,23 @@ export interface GamesSelect<T extends boolean = true> {
  */
 export interface DrivesSelect<T extends boolean = true> {
   tenant?: T;
-  name?: T;
-  slug?: T;
+  game?: T;
+  possessingTeam?: T;
+  driveNumber?: T;
+  startFieldPosition?: T;
+  result?: T;
+  plays?:
+    | T
+    | {
+        playNumber?: T;
+        quarter?: T;
+        down?: T;
+        yardsToGo?: T;
+        description?: T;
+        yardsGained?: T;
+        playType?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
