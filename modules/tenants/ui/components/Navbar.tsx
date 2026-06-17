@@ -8,7 +8,7 @@ import {usePathname} from "next/navigation";
 
 import { cn } from "@/lib/cn";
 
-import NavbarSidebar from "./navbar-sidebar";
+import NavbarSidebar from "./NavbarSidebar";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Box, Flex, Button, Skeleton } from '@radix-ui/themes';
@@ -20,9 +20,7 @@ const poppins = Poppins({
     weight: ["700"],
 });
 
-interface NavbarProps {
-    slug: string;
-}
+
 
 interface NavbarItemProps {
     href: string,
@@ -39,11 +37,9 @@ const NavbarItem = ({
     return (
         <Button
             asChild
-            variant="outline"
-            className={cn(
-                "bg-transparent hover:bg-transparent rounded-full hover:border-primary border-transparent px-3.5 text-lg",
-                isActive && "bg-black text-white hover:bg-black hover:text-white",
-            )}
+            variant="solid"
+            color="gray"
+            highContrast
         >
             <Link href={href}>
                 {children}
@@ -52,11 +48,14 @@ const NavbarItem = ({
     );
 };
 
+interface NavbarProps {
+    tenantSlug: string;
+}
 
-export const Navbar = ({slug}: NavbarProps) => {
+export const Navbar = ({ tenantSlug }: NavbarProps) => {
 
     const trpc = useTRPC();
-    const { data } = useSuspenseQuery(trpc.tenants.getOne.queryOptions({ slug }));
+    const { data } = useSuspenseQuery(trpc.tenants.getOne.queryOptions({ tenantSlug }));
 
     const tenant = data as Tenant & { icon: Media | null, image: Media | null }
 
@@ -68,10 +67,7 @@ export const Navbar = ({slug}: NavbarProps) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     return (
-        <header className="h-16 border-b font-medium justity-between bg-white
-            max-w-full sm:max-w-[calc(100vw-2rem)] lg:max-w-7xl
-            sm:border-x
-            mx-auto">
+        <header className="h-16 border-b font-medium justity-between bg-white">
             <div className="max-w-(--breakpoint-xl) mx-auto flex items-center h-full gap-2 px-4 py-6" >
                 <Link href={'/'} className="flex items-center mr-8">
                     {tenant.icon?.url && (
@@ -123,25 +119,13 @@ export const Navbar = ({slug}: NavbarProps) => {
 
 export const NavbarSkeleton = () => {
     return (
-        <header className="h-16 border-b font-medium justity-between bg-white
-            max-w-full sm:max-w-[calc(100vw-2rem)] lg:max-w-7xl
-            sm:border-x
-            mx-auto">
+        <header className="h-16 border-b font-medium justity-between bg-white">
             <div className="max-w-(--breakpoint-xl) mx-auto flex items-center h-full gap-2 px-4 py-6" >
 
-                <Flex direction="row" gap="2" align="center">
-                    <Box className="w-12 h-12 rounded-full animate-pulse">
-                        <Skeleton width="48px" height="48px" />
-                    </Box>
-                    <Box className="w-48 h-12 rounded-full animate-pulse">
-                        <Skeleton width="48px" height="48px" />
-                    </Box>
+                <Skeleton className="w-48 h-48 rounded-full" />
+                <Skeleton className="w-48 h-48 rounded-full" />
+                <Skeleton className="w-48 h-48 rounded-full" />
 
-                    <Box className="w-48 h-8 rounded-full animate-pulse">
-                        <Skeleton width="48px" height="48px" />
-                    </Box>
-
-                </Flex>
             </div>
         </header>
     );

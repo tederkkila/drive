@@ -10,10 +10,7 @@ const poppins = Poppins({
 
 export const Footer = () => {
     return (
-        <footer className="border-t font-medium bg-white
-            max-w-full sm:max-w-[calc(100vw-2rem)] lg:max-w-7xl
-            sm:border-x
-            mx-auto">
+        <footer className="border-t font-medium bg-white">
             <div className="max-w-(--breakpoint-xl) mx-auto flex items-center h-full gap-2 px-4 py-6">
                 <p>Powered by</p>
                 <Link href={process.env.NEXT_PUBLIC_APP_URL!}>

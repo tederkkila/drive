@@ -5,6 +5,9 @@ export const Games: CollectionConfig = {
     admin: {
         useAsTitle: "name",
     },
+    defaultPopulate: {
+        id: true,
+    },
     fields: [
         {
             name: "name",
@@ -21,6 +24,6 @@ export const Games: CollectionConfig = {
         { name: 'awayTeam', type: 'relationship', relationTo: 'teams', required: true },
         { name: 'homeScore', type: 'number', defaultValue: 0 },
         { name: 'awayScore', type: 'number', defaultValue: 0 },
-        { name: 'url', type: 'text', required: true}
+        { name: 'videoId', type: 'text', required: true}
     ],
 }

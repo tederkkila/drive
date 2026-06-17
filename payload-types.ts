@@ -144,6 +144,24 @@ export interface Tenant {
   icon?: (string | null) | Media;
   image?: (string | null) | Media;
   favicon?: (string | null) | Media;
+  /**
+   * This is the description of the location
+   */
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -228,6 +246,7 @@ export interface Game {
   awayTeam: string | Team;
   homeScore?: number | null;
   awayScore?: number | null;
+  videoId: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -238,19 +257,24 @@ export interface Game {
 export interface Drive {
   id: string;
   tenant?: (string | null) | Tenant;
+  driveTitle?: string | null;
   game: string | Game;
-  possessingTeam: string | Team;
+  possessingTeam?: (string | null) | Team;
   driveNumber: number;
-  startFieldPosition: string;
-  result?: string | null;
+  startFieldPosition: number;
+  result?:
+    | ('touchdown' | 'field_goal' | 'interception' | 'fumble_lost' | 'turnover_on_downs' | 'punt' | 'end_of_period')
+    | null;
   plays?:
     | {
         playNumber: number;
         quarter: number;
         down: number;
         yardsToGo: number;
+        hash: 'left' | 'middle' | 'right';
+        youTubeStart: number;
+        youTubeEnd: number;
         description: string;
-        yardsGained: number;
         playType?:
           | (
               | 'run'
@@ -264,6 +288,7 @@ export interface Drive {
               | 'turnover_on_downs'
             )
           | null;
+        yardsGained: number;
         id?: string | null;
       }[]
     | null;
@@ -386,6 +411,7 @@ export interface TenantsSelect<T extends boolean = true> {
   icon?: T;
   image?: T;
   favicon?: T;
+  content?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -464,6 +490,7 @@ export interface GamesSelect<T extends boolean = true> {
   awayTeam?: T;
   homeScore?: T;
   awayScore?: T;
+  videoId?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -473,6 +500,7 @@ export interface GamesSelect<T extends boolean = true> {
  */
 export interface DrivesSelect<T extends boolean = true> {
   tenant?: T;
+  driveTitle?: T;
   game?: T;
   possessingTeam?: T;
   driveNumber?: T;
@@ -485,9 +513,12 @@ export interface DrivesSelect<T extends boolean = true> {
         quarter?: T;
         down?: T;
         yardsToGo?: T;
+        hash?: T;
+        youTubeStart?: T;
+        youTubeEnd?: T;
         description?: T;
-        yardsGained?: T;
         playType?: T;
+        yardsGained?: T;
         id?: T;
       };
   updatedAt?: T;

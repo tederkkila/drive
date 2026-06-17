@@ -1,17 +1,93 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, Field } from 'payload'
 
 export const Drives: CollectionConfig = {
     slug: 'drives',
+    admin: {
+        useAsTitle: "driveTitle",
+    },
+    hooks: {
+        // 2. Use a collection-level beforeChange hook to update the title on save
+        beforeChange: [
+            async ({ data, req }) => {
+
+                const driveNumber = data?.driveNumber || 'No Drive Number';
+                const gameId = data?.game || 'No Game';
+                const teamId = data?.possessingTeam || 'No Team';
+
+                // console.log('driveNumber', driveNumber);
+                // console.log('gameId', gameId);
+                // console.log('teamId', teamId);
+
+                if (!gameId || !teamId) {
+                    data.profileTitle = `New Drive - ${driveNumber}`;
+                    return data;
+                }
+
+                try {
+                    // Fetch the game details only once during the write operation
+                    const gameDocid = typeof gameId === 'object' ? gameId.id : gameId;
+                    const gameDoc = await req.payload.findByID({
+                        collection: 'games',
+                        id: gameDocid,
+                        depth: 0,
+                    });
+
+                    const teamDocid = typeof teamId === 'object' ? teamId.id : teamId;
+                    const teamDoc = await req.payload.findByID({
+                        collection: 'teams',
+                        id: teamDocid,
+                        depth: 0,
+                    });
+
+                    if (gameDoc && teamDoc) {
+                        const gameName = gameDoc.name || '';
+                        const teamName = teamDoc.abbreviation || '';
+                        const name = `${gameName} ${teamName}`.trim() || 'Unnamed User';
+                        data.driveTitle = `${name} | Drive ${driveNumber.toString().padStart(3, '0')}`;
+                    }
+                } catch (error) {
+                    data.driveTitle = `Drive Creation In Progress (${driveNumber})`;
+                }
+
+                // console.log('data.driveTitle', data.driveTitle);
+                return data;
+            }
+        ]
+    },
     fields: [
+        {
+            name: 'driveTitle',
+            type: 'text',
+            admin: {
+                hidden: true, // Hides it from the edit form view if you don't need it there
+            },
+        },
+
+
         // Relationships
-        { name: 'game', type: 'relationship', relationTo: 'games', required: true },
+        { name: 'game', type: 'relationship', relationTo: 'games', required: true, maxDepth: 2 },
         { name: 'possessingTeam', type: 'relationship', relationTo: 'teams',  },
 
-        // Drive Metadata
-        { name: 'driveNumber', type: 'number', required: true },
-        { name: 'startFieldPosition', type: 'text', required: true }, // e.g., "Own 25"
-        { name: 'result', type: 'text' }, // e.g., "Touchdown", "Punt", "Interception"
+        {type: "group", label: "Drive MetaData", fields: [
+            // Drive Metadata
+            {type: "row", fields: [
+                { name: 'driveNumber', type: 'number', required: true, index: true, admin: { width: '15%' }, },
+                { name: 'direction', type: 'select', options: ['left', 'right'], required: true, admin: { width: '15%' }, },
+                { name: 'startFieldPosition', type: 'number', required: true }, // e.g., "Own 25"
+                { name: 'result', type: 'select',
+                    options: [
+                        'touchdown',
+                        'field_goal',
+                        'interception',
+                        'fumble_lost',
+                        'turnover_on_downs',
+                        'punt',
+                        'end_of_period',
+                    ]
+                }, // e.g., "Touchdown", "Punt", "Interception"
 
+            ]},
+        ]},
 
         // Embedded Plays Array
         {
@@ -19,28 +95,76 @@ export const Drives: CollectionConfig = {
             type: 'array',
             admin: { initCollapsed: true },
             fields: [
-                { name: 'youTubeStart', type: "date"},
-                { name: 'youTubeEnd', type: "date"},
-                { name: 'playNumber', type: 'number', required: true },
-                { name: 'quarter', type: 'number', required: true },
-                { name: 'down', type: 'number', required: true },
-                { name: 'yardsToGo', type: 'number', required: true },
+                {type: "row", fields: [
+                        { name: 'playNumber', type: 'number', required: true, admin: { width: '15%' }, },
+                        { name: 'quarter', type: 'number', required: true, admin: { width: '15%' }, },
+                        { name: 'down', type: 'number', required: true, admin: { width: '15%' },
+                            validate: (val) => {
+                                // Standard required check
+                                if (val === undefined || val === null) {
+                                    return 'This field is required'
+                                }
+
+                                // Range limit logic (e.g., 18 to 100)
+                                if (val < 1 || val > 4) {
+                                    return 'Age must be between 1 and 4'
+                                }
+
+                                return true // Return true if valid
+                            },
+                        },
+                        { name: 'yardsToGo', title: "Distance", type: 'number', required: true, admin: { width: '15%' }, },
+                        {
+                            name: 'hash', type: 'select',
+                            options: [
+                                'left',
+                                'middle',
+                                'right',
+                            ],
+                            required: true,
+                        },
+                    ]
+                },
+                {
+                    type: "row", fields: [
+                        { name: 'youTubeStart', type: "number", required: true,
+                            admin: {
+                                components: {
+                                    Field: '@/components/payload/TimePickerInput#TimePickerInput', // Path to your custom component
+                                },
+                            }
+                        },
+                        { name: 'youTubeEnd', type: "number", required: true,
+                            admin: {
+                                components: {
+                                    Field: '@/components/payload/TimePickerInput#TimePickerInput', // Path to your custom component
+                                },
+                            }
+                        },
+                    ]
+                },
                 { name: 'description', type: 'textarea', required: true }, // e.g., "Mahomes pass deep right to Kelce..."
-                { name: 'yardsGained', type: 'number', required: true },
-                { name: 'playType', type: 'select',
-                    options: [
-                        'run',
-                        'pass',
-                        'punt',
-                        'field_goal',
-                        'penalty',
-                        'interception',
-                        'fumble_recovered',
-                        'fumble_lost',
-                        'turnover_on_downs'
+                {
+                    type: "row", fields: [
+                        {
+                            name: 'playType', type: 'select',
+                            options: [
+                                'run',
+                                'pass',
+                                'punt',
+                                'field_goal',
+                                'penalty',
+                                'interception',
+                                'fumble_recovered',
+                                'fumble_lost',
+                                'turnover_on_downs'
+                            ]
+                        },
+                        {name: 'yardsGained', type: 'number', required: true, admin: { width: '15%' },},
+
                     ]
                 },
             ],
         },
-    ],
+    ] as Field[],
 }

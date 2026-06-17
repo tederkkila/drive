@@ -13,7 +13,7 @@ export const Tenants: CollectionConfig = {
         useAsTitle: 'slug',
     },
     defaultPopulate: {
-
+        id: true,
     },
     fields: [
         {

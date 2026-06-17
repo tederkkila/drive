@@ -3,18 +3,19 @@ import type { Metadata } from "next";
 import { HydrateClient, prefetch, trpc, caller } from "@/trpc/server";
 import { ErrorBoundary } from 'react-error-boundary';
 
-import {Navbar, NavbarSkeleton} from "@/modules/tenants/ui/components/navbar";
-import {Footer} from "@/modules/tenants/ui/components/footer";
+import {Navbar, NavbarSkeleton} from "@/modules/tenants/ui/components/Navbar";
+import {Footer} from "@/modules/tenants/ui/components/Footer";
 
 interface LayoutProps {
     children: React.ReactNode;
-    params: Promise<{ slug: string }>;
+    params: Promise<{ tenantSlug: string }>;
 }
 
 export async function generateMetadata({ params }: Pick<LayoutProps, "params">): Promise<Metadata> {
-    const { slug } = await params;
 
-    const tenant = await caller.tenants.getOne({ slug });
+    const { tenantSlug } = await params;
+
+    const tenant = await caller.tenants.getOne({ tenantSlug });
 
     const faviconUrl =
         tenant.favicon && typeof tenant.favicon === "object" && tenant.favicon.url
@@ -32,10 +33,10 @@ export async function generateMetadata({ params }: Pick<LayoutProps, "params">):
 }
 
 const Layout = async ({ children, params }: LayoutProps) => {
-    const { slug } = await params;
+    const { tenantSlug } = await params;
 
     prefetch(
-        trpc.tenants.getOne.queryOptions({ slug }),
+        trpc.tenants.getOne.queryOptions({ tenantSlug }),
     );
 
     return (
@@ -44,15 +45,15 @@ const Layout = async ({ children, params }: LayoutProps) => {
             <HydrateClient>
                 <ErrorBoundary fallback={<div>Error Loading the Navigation Bar</div>}>
                     <Suspense fallback={<NavbarSkeleton />}>
-                        <Navbar slug={ slug }/>
+                        <Navbar tenantSlug={ tenantSlug }/>
                     </Suspense>
                 </ErrorBoundary>
             </HydrateClient>
 
             <div className="min-h-[calc(100vh-8rem)] bg-[#edededcc] sm:border-x
-                max-w-full sm:max-w-[calc(100vw-2rem)] lg:max-w-7xl
+                max-w-full
                 mx-auto">
-                <div className="">
+                <div className="p-4">
                     { children }
                 </div>
             </div>

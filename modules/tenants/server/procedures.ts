@@ -9,7 +9,7 @@ export const tenantsRouter = createTRPCRouter({
     getOne: baseProcedure
         .input(
             z.object({
-                slug: z.string(),
+                tenantSlug: z.string(),
             }),
         )
         .query(async ({ctx, input}) => {
@@ -19,7 +19,7 @@ export const tenantsRouter = createTRPCRouter({
                 depth: 2, // "tenant.image" is a type of "Media"
                 where: {
                     slug: {
-                        equals: input.slug,
+                        equals: input.tenantSlug,
                     },
                 },
                 limit: 1,

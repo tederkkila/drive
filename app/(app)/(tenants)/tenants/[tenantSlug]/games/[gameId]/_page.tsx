@@ -2,27 +2,34 @@ import React, { Suspense } from "react";
 import { HydrateClient, prefetch, trpc } from "@/trpc/server";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { TenantRichText } from "@/modules/tenants/ui/components/tenant-rich-text"
+import { GameView } from "@/modules/games/ui/GameView";
 
 interface Props {
-    params: Promise<{ slug: string }>;
+    params: Promise<{
+        tenantSlug: string,
+        gameId: string,
+    }>;
 }
 
 const Page = async ({ params }: Props) => {
-    const { slug } = await params;
+    const { tenantSlug, gameId } = await params;
+
+    console.log(`[gameId]page.tsx | game: ${gameId}`.toString());
 
     prefetch(
-        trpc.tenants.getOne.queryOptions({
-            slug: slug,
+        trpc.games.getOne.queryOptions({
+            gameId: gameId,
         })
     );
 
     return (
+
         <div className="flex flex-col gap-4">
+            <h2>Game Data {gameId}</h2>
             <HydrateClient>
                 <ErrorBoundary fallback={<div>Something went wrong</div>}>
-                    <Suspense>
-                        <TenantRichText slug={slug} />
+                    <Suspense fallback={<div>GameView Loading...</div>}>
+                        <GameView gameId={ gameId } />
                     </Suspense>
                 </ErrorBoundary>
             </HydrateClient>
