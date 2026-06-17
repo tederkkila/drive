@@ -15,7 +15,7 @@ interface YouTubeAPIEmbedProps {
 
 export const YouTubeAPIEmbed = ({ videoId }: YouTubeAPIEmbedProps) => {
 
-    const { startTime, setStartTime, endTime, setEndTime } = useGameVideo();
+    const { startTime, endTime, } = useGameVideo();
 
     const playerRef = useRef<YT.Player | null>(null);
     const intervalRef = useRef<NodeJS.Timeout | number | null>(null);

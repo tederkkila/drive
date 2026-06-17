@@ -1,7 +1,6 @@
 /* Clean, modern container that respects parent constraints */
 .video-responsive-wrapper {
     width: 100%;
-    max-width: 1280px;
     aspect-ratio: 16 / 9; /* Replaces padding-top completely */
     position: relative;
     margin: 0 auto;

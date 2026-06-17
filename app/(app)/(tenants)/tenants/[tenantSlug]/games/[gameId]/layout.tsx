@@ -1,10 +1,6 @@
-import React, { Suspense } from "react";
+import React from "react";
 import type { Metadata } from "next";
-import { HydrateClient, prefetch, trpc, caller } from "@/trpc/server";
-import { ErrorBoundary } from 'react-error-boundary';
-
-import {Navbar, NavbarSkeleton} from "@/modules/tenants/ui/components/Navbar";
-import {Footer} from "@/modules/tenants/ui/components/Footer";
+import { caller } from "@/trpc/server";
 
 interface LayoutProps {
     children: React.ReactNode;

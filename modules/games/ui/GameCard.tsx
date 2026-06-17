@@ -4,12 +4,10 @@ import {
     CardAction,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
 import Link from "next/link"
-import { Game, Team } from "@/payload-types";
 import { GameWithTeams } from "@/modules/games/games";
 
 interface GameCardProps {

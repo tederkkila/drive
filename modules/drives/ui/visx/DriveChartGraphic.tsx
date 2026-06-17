@@ -95,7 +95,7 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartGra
     const yardLines: number[] = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 45, 40, 35, 30, 25, 20, 15, 10, 5];
 
     return (
-        <svg width={width} height={height} style={{ backgroundColor: '#ccd5cc', fontFamily: 'poppins, Arial, sans-serif', display: 'block' }}>
+        <svg width={width} height={height} style={{ backgroundColor: '#ccd5cc', fontFamily: `${poppins}, Arial, sans-serif`, display: 'block' }}>
             <Group>
                 {/* Outer Field Boundary */}
                 <rect x={0} y={0} width={width} height={height} stroke="#aaaaaa" strokeWidth={2} fill="transparent" />
@@ -148,7 +148,7 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartGra
                                 fontSize={Math.max(10, width * 0.018)}
                                 fontWeight="bolder"
                                 textAnchor="middle"
-                                letter-spacing="2"
+                                letterSpacing="2"
                             >
                                 {yard}
                             </text>

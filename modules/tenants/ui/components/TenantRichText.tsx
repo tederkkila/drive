@@ -3,9 +3,8 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useTRPC } from "@/trpc/client";
 import { RichText } from '@payloadcms/richtext-lexical/react'
-import Image from "next/image";
 import React from "react";
-import { AspectRatio, Box, Grid, Flex, Container, Text, Skeleton } from "@radix-ui/themes";
+import { Box } from "@radix-ui/themes";
 
 interface TenantProps {
     tenantSlug: string;
