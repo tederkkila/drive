@@ -13,7 +13,7 @@ interface InnerFieldProps {
  * 1. The Inner SVG Field Renderer
  */
 function ResponsiveFootballField({ width, height }: InnerFieldProps): React.JSX.Element {
-    const totalLengthYards = 120; // 100 yards of playing field + two 10-yard endzones
+    const totalLengthYards = 120; // 100 yards of playing field + two 10-yard end zones
     const totalWidthYards = 53.33; // Standard football field width ratio
 
     // Create responsive linear scales based on active parent element bounds

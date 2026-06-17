@@ -13,7 +13,6 @@ import {
     SidebarProvider,
     SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { ErrorBoundary } from "react-error-boundary";
 import React, { Suspense } from "react";
 import { GameView } from "@/modules/games/ui/GameView";
 import { caller, HydrateClient, prefetch, trpc } from "@/trpc/server";

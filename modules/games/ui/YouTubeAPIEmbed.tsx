@@ -1,12 +1,14 @@
 import { useRef, useEffect } from "react";
-import { useGameVideo } from "@/modules/games/ui/GameContext";
+import { useGameVideo } from "./GameContext";
 import YouTube, { YouTubeProps } from 'react-youtube';
 import { AspectRatio, Box } from "@radix-ui/themes";
 import './youtube.css'
 
-interface Window {
-    YT: any;
-    onYouTubeIframeAPIReady?: () => void;
+declare global {
+    interface Window {
+        YT: typeof YT;
+        onYouTubeIframeAPIReady?: () => void;
+    }
 }
 
 interface YouTubeAPIEmbedProps {
@@ -17,16 +19,16 @@ export const YouTubeAPIEmbed = ({ videoId }: YouTubeAPIEmbedProps) => {
 
     const { startTime, endTime, } = useGameVideo();
 
-    const playerRef = useRef<YT.Player | null>(null);
+    const playerRef = useRef<any>(null);
     const intervalRef = useRef<NodeJS.Timeout | number | null>(null);
     const timeRef = useRef({ start: startTime, end: endTime });
 
-    // Sync the mutable ref values immediately whenever context state shifts
+    // Sync the mutable ref values immediately whenever the context state shifts
     useEffect(() => {
         timeRef.current = { start: startTime, end: endTime };
     }, [startTime, endTime]);
 
-    // Handle immediate manual seek changes if user updates numbers while paused
+    // Handle immediate manual seek changes if the user updates numbers while paused
     useEffect(() => {
         if (playerRef.current) {
             playerRef.current.seekTo(startTime, true);
@@ -46,7 +48,7 @@ export const YouTubeAPIEmbed = ({ videoId }: YouTubeAPIEmbedProps) => {
     };
 
     const onPlayerReady: YouTubeProps['onReady'] = (event) => {
-        const player = event.target as YT.Player;
+        const player = event.target;
 
         playerRef.current = player;
         if (typeof player.playVideo === "function") {
@@ -56,7 +58,7 @@ export const YouTubeAPIEmbed = ({ videoId }: YouTubeAPIEmbedProps) => {
 
     //TODO Handle player pause state change correctly
     const onPlayerStateChange: YouTubeProps['onStateChange'] = (event) => {
-        playerRef.current = event.target as YT.Player;
+        playerRef.current = event.target;
 
         if (event.data === window.YT.PlayerState.PLAYING) {
             startTracking();
@@ -105,7 +107,6 @@ export const YouTubeAPIEmbed = ({ videoId }: YouTubeAPIEmbedProps) => {
                         opts={opts}
                         onReady={onPlayerReady}
                         onStateChange={onPlayerStateChange}
-                        containerClassName="video-container"
                         className="youtube-iframe"
                     />
                 </AspectRatio>

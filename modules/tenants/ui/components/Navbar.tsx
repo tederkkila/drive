@@ -11,7 +11,7 @@ import { cn } from "@/lib/cn";
 import NavbarSidebar from "./NavbarSidebar";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Box, Flex, Button, Skeleton } from '@radix-ui/themes';
+import { Button, Skeleton } from '@radix-ui/themes';
 import { Media, Tenant } from "@/payload-types";
 
 

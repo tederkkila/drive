@@ -99,7 +99,7 @@ export const Drives: CollectionConfig = {
                         { name: 'playNumber', type: 'number', required: true, admin: { width: '15%' }, },
                         { name: 'quarter', type: 'number', required: true, admin: { width: '15%' }, },
                         { name: 'down', type: 'number', required: true, admin: { width: '15%' },
-                            validate: (val) => {
+                            validate: (val: number) => {
                                 // Standard required check
                                 if (val === undefined || val === null) {
                                     return 'This field is required'
@@ -143,7 +143,7 @@ export const Drives: CollectionConfig = {
                         },
                     ]
                 },
-                { name: 'description', type: 'textarea', required: true }, // e.g., "Mahomes pass deep right to Kelce..."
+                { name: 'description', type: 'textarea', required: true },
                 {
                     type: "row", fields: [
                         {

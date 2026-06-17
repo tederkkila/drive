@@ -16,7 +16,7 @@ interface DriveChartTriggerGraphicProps {
     height: number;
 }
 
-export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartGraphicProps) => {
+export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTriggerGraphicProps) => {
 
     console.log("drive", drive)
     // console.log("width", width)
@@ -28,8 +28,6 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartGra
     let passYards = 0;
     let penaltyCount = 0;
     let penaltyYards = 0;
-    let totalYards = 0;
-    let ballPosition = drive.startFieldPosition;
 
     /*
     <div>Drive Row</div>
@@ -42,7 +40,7 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartGra
      */
 
     drive.plays?.forEach((play, index, arr) => {
-        const isLast: boolean = index === arr.length - 1;
+        //const isLast: boolean = index === arr.length - 1;
         //console.log("play", play)
 
         if (play.playType === "run") {
@@ -61,18 +59,16 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartGra
         }
 
         // if(isLast) {
-        //     totalYards = runYards + passYards;
-        //     ballPosition = calculateEndSpot(ballPosition, totalYards)
+        //
         // }
     })
 
-    totalYards = runYards + passYards;
+    const totalYards = runYards + passYards;
 
     const totalLengthYards: number = 120;
     const totalWidthYards: number = 53.33;
 
     const startFieldPosition = getAbsolutePosition(drive.startFieldPosition);
-    const endFieldPosition = getAbsolutePosition(calculateEndSpot(startFieldPosition, totalYards));
 
     // console.log("startFieldPosition", startFieldPosition)
     // console.log("endFieldPosition", endFieldPosition)

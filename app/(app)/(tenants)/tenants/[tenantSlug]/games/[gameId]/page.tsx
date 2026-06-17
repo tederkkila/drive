@@ -31,7 +31,6 @@ const Page = async ({ params }: Props) => {
     //console.log(`[gameId]page.tsx | game: ${gameId}`.toString());
 
     const game = await caller.games.getOne({ gameId });
-    //console.log("game from caller: ", game);
 
     prefetch(
         trpc.games.getGameWithDrives.queryOptions({
