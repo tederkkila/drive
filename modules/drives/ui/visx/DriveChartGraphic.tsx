@@ -8,6 +8,7 @@ import { getAbsolutePosition, calculateEndSpotAbsolute } from "@/modules/drives/
 import { Poppins } from "next/font/google";
 import { FieldGroup } from "@/modules/drives/ui/visx/FieldGroup";
 import { useGameVideo } from "@/modules/games/ui/GameContext";
+import { PlayGraphic } from "@/modules/drives/ui/visx/PlayGraphic";
 const poppins = Poppins({
     subsets: ["latin"],
     weight: ["700"],
@@ -233,8 +234,6 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
         setEndTime(play.youTubeEnd);
     }
 
-
-
     const memoizedSvg = useMemo(() => {
 
         let currentStartSpotAbsolute = driveStartSpotAbsolute;
@@ -270,13 +269,13 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                         }
                     }
 
-                    console.log("   currentPlayYards", currentPlayYards)
+                    //console.log("   currentPlayYards", currentPlayYards)
 
                     //drive marker calculations
                     const currentEndSpotAbsolute = calculateEndSpotAbsolute(currentStartSpotAbsolute, currentPlayYards, drive.direction);
 
-                    console.log("   currentStartSpotAbsolute", currentStartSpotAbsolute)
-                    console.log("   currentEndSpotAbsolute", currentEndSpotAbsolute)
+                    //console.log("   currentStartSpotAbsolute", currentStartSpotAbsolute)
+                    //console.log("   currentEndSpotAbsolute", currentEndSpotAbsolute)
 
                     let driveMarkerX = currentStartSpotAbsolute;
                     let driveMarkerWidth = Math.abs(currentPlayYards);
@@ -285,8 +284,8 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                         driveMarkerX = currentEndSpotAbsolute;
                     }
 
-                    console.log("   driveMarkerX", driveMarkerX)
-                    console.log("   driveMarkerWidth", driveMarkerWidth)
+                    //console.log("   driveMarkerX", driveMarkerX)
+                    //console.log("   driveMarkerWidth", driveMarkerWidth)
 
                     playTotalYards += currentPlayYards;
 
@@ -302,23 +301,31 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                     }
 
                     let fillOpacity = 0.5;
-                    if (currentPlayYards < 0){
+                    if (currentPlayYards < 0 && playColor !== "yellow"){
                         fillOpacity = 0.2;
                     }
+
+                    const los = calculateEndSpotAbsolute(currentStartSpotAbsolute, play.yardsToGo, drive.direction);
+
 
                     return (
                         <Group left={0} top={index * playHeight} key={play.id}>
                             {/*<text x={0} y={10}>{play.id}</text>*/}
                             <text x={0} y={15}>{play.description}</text>
                             <rect x={0} y={2} width={width} height={playHeight -4} fill={driveColor} fillOpacity={0.1} />
-                            <rect
+                            {/*First down line*/}
+                            <line x1={xField(los)} y1={2} x2={xField(los)} y2={playHeight-4} stroke="yellow" strokeWidth="2" />
+
+                            <PlayGraphic
                                 x={xField(driveMarkerX)}
                                 y={yScale(10)}
                                 width={xScale(driveMarkerWidth)}
                                 height={yScale(30)}
+                                direction={drive.direction}
+                                currentPlayYards={currentPlayYards}
                                 fill={playColor} fillOpacity={fillOpacity}
                             />
-                            <text x={xField(driveMarkerX + driveMarkerWidth) + 1} y={22}>{currentPlayYards}</text>
+                            <text x={xField(driveMarkerX + driveMarkerWidth) + 2} y={22}>{currentPlayYards}</text>
                             {/* Transparent click handler*/}
                             <rect x={0} y={2} width={width} height={playHeight -4} fill="transparent"
                                   onClick={() => handleClick(play)}

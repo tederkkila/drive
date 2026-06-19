@@ -36,7 +36,7 @@ export const gamesRouter = createTRPCRouter({
             });
 
             const game: Game = gamesData.docs[0];
-            console.log("game.name: " + game.name)
+            //console.log("game.name: " + game.name)
 
             if (!game) {
                 throw new TRPCError({ code: "NOT_FOUND", message: "Game not found" });
@@ -90,7 +90,7 @@ export const gamesRouter = createTRPCRouter({
             });
 
             const game = gamesData.docs[0];
-            console.log("game.name: " + game.name)
+            //console.log("game.name: " + game.name)
 
             if (!game) {
                 throw new TRPCError({ code: "NOT_FOUND", message: "Game not found" });
