@@ -1,14 +1,27 @@
+import React from "react";
+import { useMemo } from "react";
 import { Drive } from "@/payload-types";
+type Play = NonNullable<Drive["plays"]>[number];
 import { Group } from '@visx/group';
 import { scaleLinear } from "@visx/scale";
-import { Line } from "@visx/shape";
-import React from "react";
-import { calculateEndSpot, getAbsolutePosition } from "@/modules/drives/ui/fieldCalculations";
+import { getAbsolutePosition } from "@/modules/drives/ui/fieldCalculations";
 import { Poppins } from "next/font/google";
+import { FieldGroup } from "@/modules/drives/ui/visx/FieldGroup";
+import { useGameVideo } from "@/modules/games/ui/GameContext";
 const poppins = Poppins({
     subsets: ["latin"],
     weight: ["700"],
 });
+
+// const fieldColor = "#ccd5cc";
+const fieldColor = "#e9e9e9";
+// const endZoneColor = "#a8b0a7";
+const endZoneColor = "#adadad";
+const lineColor = "#555555";
+const driveColor = "#555555";
+
+const totalLengthYards: number = 120;
+const totalWidthYards: number = 53.33;
 
 interface DriveChartTriggerGraphicProps {
     drive: Drive;
@@ -18,44 +31,54 @@ interface DriveChartTriggerGraphicProps {
 
 export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTriggerGraphicProps) => {
 
-    console.log("drive", drive)
+    // console.log("drive", drive)
     // console.log("width", width)
     // console.log("height", height)
 
     let runCount = 0;
     let runYards = 0;
     let passCount = 0;
+    let passCompletions = 0;
     let passYards = 0;
     let penaltyCount = 0;
     let penaltyYards = 0;
-
-    /*
-    <div>Drive Row</div>
-    <div>Run: {runCount} for {runYards} yards</div>
-    <div>Pass: {passCount} for {passYards} yards</div>
-    <div>Penalty: {penaltyCount} for {penaltyYards} yards</div>
-    <div>Total: {totalYards} yards</div>
-    <div>Starting Position: {drive.startFieldPosition} Final Position: {ballPosition}</div>
-
-     */
+    let timeouts = 0;
 
     drive.plays?.forEach((play, index, arr) => {
         //const isLast: boolean = index === arr.length - 1;
         //console.log("play", play)
 
-        if (play.playType === "run") {
-            runCount++;
-            runYards += play.yardsGained;
+        const nullifyPlay: boolean = !!(play.nullifyPlay);
+
+        if (play.playType === "penalty" || (play.penalty !== null && play.penalty !== undefined)) {
+            penaltyCount++;
+            penaltyYards += (play.penaltyYards) ? play.penaltyYards : 0;
         }
 
-        if (play.playType === "penalty") {
-            penaltyCount++;
-            penaltyYards += play.yardsGained;
+        if (play.playType === "run") {
+            runCount++;
+            if(!nullifyPlay) {
+                runYards += play.yardsGained;
+            }
         }
 
         if (play.playType === "pass") {
             passCount++;
-            passYards += play.yardsGained;
+            if (
+                play.description.toLowerCase().includes("interception") ||
+                play.description.toLowerCase().includes("incomplete")
+            ) {
+                //do nothing
+            } else {
+                passCompletions++;
+            }
+            if(!nullifyPlay) {
+                passYards += play.yardsGained;
+            }
+        }
+
+        if (play.playType === "timeout") {
+            timeouts++;
         }
 
         // if(isLast) {
@@ -65,13 +88,12 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
 
     const totalYards = runYards + passYards;
 
-    const totalLengthYards: number = 120;
-    const totalWidthYards: number = 53.33;
+    const startSpotAbsolute = getAbsolutePosition(drive.startFieldPosition, drive.direction);
 
-    const startFieldPosition = getAbsolutePosition(drive.startFieldPosition);
-
-    // console.log("startFieldPosition", startFieldPosition)
-    // console.log("endFieldPosition", endFieldPosition)
+    // console.log("Test startFieldPosition -45 Left", getAbsolutePosition(-45, "left"))
+    // console.log("Test startFieldPosition -45 Right", getAbsolutePosition(-45, "right"))
+    // console.log("Test startFieldPosition 45 Left", getAbsolutePosition(45, "left"))
+    // console.log("Test startFieldPosition 45 Right", getAbsolutePosition(45, "right"))
 
     const xScale = scaleLinear<number>({
         domain: [0, totalLengthYards],
@@ -86,105 +108,83 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
         return xScale(x+10);
     }
 
+    //drive marker calculations
+    const endSpotAbsolute = calculateEndSpotAbsolute(startSpotAbsolute, totalYards, drive.direction);
 
-    const yardNumbers: number[] = [10, 20, 30, 40, 50, 40, 30, 20, 10];
-    const yardLines: number[] = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 45, 40, 35, 30, 25, 20, 15, 10, 5];
+    let driveMarkerX = startSpotAbsolute;
+    let driveMarkerWidth = Math.abs(totalYards);
+
+    if (startSpotAbsolute > endSpotAbsolute) {
+        driveMarkerX = endSpotAbsolute;
+    }
+
+    const directionTrianglePoints = `${xField(driveMarkerX - 1.5).toString()} ${yScale((30+20+20)/2)},`
+        + `${xField(driveMarkerX - 0.15).toString()} ${yScale(20)},`
+        + `${xField(driveMarkerX - 0.15).toString()} ${yScale(30+20)},`
+
+    const memoizedSvg = useMemo(() => {
+        return (
+            <svg width={width} height={height} style={{ backgroundColor: fieldColor, fontFamily: `${poppins}, Arial, sans-serif`, display: 'block' }}>
+                <Group>
+
+                    <FieldGroup
+                        xScale={xScale}
+                        yScale={yScale}
+                        width={width}
+                        height={height}
+                        totalLengthYards={totalLengthYards}
+                        totalWidthYards={totalWidthYards}
+                        endZoneColor={endZoneColor}
+                        lineColor={lineColor}
+                    />
+
+                    {/* Drive Row Graphic   */}
+                    <polygon
+                        points={directionTrianglePoints}
+                        fill={driveColor}
+                        // stroke={"#555555"} strokeWidth={"1"}
+                    />
+
+                    <rect
+                        x={xField(driveMarkerX)}
+                        y={yScale(20)}
+                        width={xScale(driveMarkerWidth)}
+                        height={yScale(30)}
+                        // stroke="#555555" strokeWidth={1}
+                        fill={driveColor} fillOpacity={0.5}
+                    />
+
+                    <text
+                        x={xField(1)}
+                        y={yScale(11)}
+                        fill={lineColor}
+                        fillOpacity={0.85}
+                        fontSize={Math.max(12, width * 0.015)}
+                        fontWeight="400"
+                        textAnchor="start"
+                        //letterSpacing="2"
+                    >
+                        <tspan fontWeight="bold" fill="black">Total Yards: </tspan>
+                        {totalYards} |
+                        <tspan fontWeight="bold" fill="red"> Run: </tspan>
+                        {runCount} for {runYards} yards |
+                        <tspan fontWeight="bold" fill="blue"> Pass: </tspan>
+                        {passCompletions}/{passCount} for {passYards} yards |
+                        <tspan fontWeight="bold" fill="brown"> Penalty: </tspan>
+                        {penaltyCount} for {penaltyYards} yards
+                        <tspan fontWeight="bold" fill="brown"> Timeouts: </tspan>
+                        {timeouts}
+                    </text>
+
+
+                </Group>
+            </svg>
+
+        );
+    }, [width, height, drive.plays]);
 
     return (
-        <svg width={width} height={height} style={{ backgroundColor: '#ccd5cc', fontFamily: `${poppins}, Arial, sans-serif`, display: 'block' }}>
-            <Group>
-                {/* Outer Field Boundary */}
-                <rect x={0} y={0} width={width} height={height} stroke="#aaaaaa" strokeWidth={2} fill="transparent" />
-
-                {/* Left End Zone (0 to 10 yards) */}
-                <rect x={xScale(0)} y={yScale(0)} width={xScale(10)} height={height} fill="#a8b0a7" stroke="#aaaaaa" strokeWidth={1} />
-
-                {/* Right End Zone (110 to 120 yards) */}
-                <rect x={xScale(110)} y={yScale(0)} width={xScale(10)} height={height} fill="#a8b0a7" stroke="#aaaaaa" strokeWidth={1} />
-
-                {/* 5-Yard Lines */}
-                {yardLines.map((yard: number, index: number) => {
-                    const yardAbsoluteX: number = 15 + index * 5;
-                    const pixelX: number = xScale(yardAbsoluteX);
-
-                    return (
-                        <g key={`yard-line-${index}`}>
-                            <Line
-                                from={{ x: pixelX, y: yScale(0) }}
-                                to={{ x: pixelX, y: yScale(totalWidthYards) }}
-                                stroke="#555555"
-                                strokeOpacity="0.2"
-                                strokeWidth={1}
-                            />
-                        </g>
-                    );
-                })}
-
-                {/* Major 10-Yard Lines and Text Labels */}
-                {yardNumbers.map((yard: number, index: number) => {
-                    const yardAbsoluteX: number = 20 + index * 10;
-                    const pixelX: number = xScale(yardAbsoluteX);
-
-                    return (
-                        <g key={`yard-number-${index}`}>
-                            <Line
-                                from={{ x: pixelX, y: yScale(0) }}
-                                to={{ x: pixelX, y: yScale(totalWidthYards) }}
-                                stroke="#555555"
-                                strokeOpacity="0.2"
-                                strokeWidth={1}
-                            />
-
-                            {/* Top Sideline Label */}
-                            <text
-                                x={pixelX + 1}
-                                y={yScale(totalWidthYards-4)}
-                                fill="#555555"
-                                fillOpacity={0.35}
-                                fontSize={Math.max(10, width * 0.018)}
-                                fontWeight="bolder"
-                                textAnchor="middle"
-                                letterSpacing="2"
-                            >
-                                {yard}
-                            </text>
-
-
-                        </g>
-                    );
-                })}
-
-                {/* Midfield 50-Yard Line */}
-                <Line
-                    from={{ x: xScale(60), y: yScale(0) }}
-                    to={{ x: xScale(60), y: yScale(totalWidthYards) }}
-                    stroke="#555555"
-                    strokeOpacity="0.2"
-                    strokeWidth={2}
-                />
-
-                {Array.from({ length: 99 }).map((_, i: number) => {
-                    const yardX: number = 11 + i;
-                    const pixelX: number = xScale(yardX);
-
-                    if (yardX % 5 === 0) return null;
-
-                    return (
-                        <g key={`hash-${i}`}>
-                            <Line from={{ x: pixelX, y: yScale(0) }} to={{ x: pixelX, y: yScale(2) }} stroke="#555555" strokeOpacity="0.3" strokeWidth={1} />
-                            <Line from={{ x: pixelX, y: yScale(18.5) }} to={{ x: pixelX, y: yScale(19.5) }} stroke="#555555" strokeOpacity="0.3" strokeWidth={1} />
-                            <Line from={{ x: pixelX, y: yScale(33.83) }} to={{ x: pixelX, y: yScale(34.83) }} stroke="#555555" strokeOpacity="0.3" strokeWidth={1} />
-                            <Line from={{ x: pixelX, y: yScale(totalWidthYards - 2) }} to={{ x: pixelX, y: yScale(totalWidthYards) }} stroke="#555555" strokeOpacity="0.3" strokeWidth={1} />
-                        </g>
-                    );
-                })}
-
-                {/* Drive Row Graphic   */}
-                <rect x={xField(startFieldPosition)} y={yScale(5)} width={xScale(totalYards)} height={yScale(totalWidthYards-20)} stroke="#555555" strokeWidth={1} fill="#555555" fillOpacity={0.5} />
-
-
-            </Group>
-        </svg>
+        <div>{memoizedSvg}</div>
     )
 }
 
@@ -196,20 +196,146 @@ interface DriveChartGraphicProps {
 
 export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicProps) => {
 
-    console.log("drive", drive)
-    console.log("width", width)
-    console.log("height", height)
+    //console.log("drive", drive.driveNumber)
 
+    if (!drive.plays) return null;
+    if (width === 0) return null;
+    if (height === 0) return null;
+
+    const playHeight = 40;
+    //const height = playHeight * drive.plays.length;
+    //console.log("parent height", height)
+
+    let driveStartSpotAbsolute = getAbsolutePosition(drive.startFieldPosition, drive.direction);
+
+    const xScale = scaleLinear<number>({
+        domain: [0, totalLengthYards],
+        range: [0, width],
+    });
+    const yScale = scaleLinear<number>({
+        domain: [0, totalWidthYards],
+        range: [0, playHeight],
+    });
+
+    const xField = (x:number) => {
+        return xScale(x+10);
+    }
+
+    const { setStartTime, setEndTime } = useGameVideo();
+
+    const handleClick = (
+        // event: React.MouseEvent<SVGRectElement, MouseEvent>,
+        play: Play
+    ) => {
+        console.log("handleClick", play)
+
+        setStartTime(play.youTubeStart);
+        setEndTime(play.youTubeEnd);
+    }
+
+
+
+    const memoizedSvg = useMemo(() => {
+
+        let currentStartSpotAbsolute = driveStartSpotAbsolute;
+        let playTotalYards = 0
+
+        if (!drive.plays) return null;
+
+        return (
+            <svg width={width} height={height} className="fade-in duration-200">
+                <rect x={0} y={0} width={width} height={height} fill={fieldColor}/>
+
+
+                {drive.plays.map((play, index) => {
+
+                    // console.log("***** PROCESS PLAY *****")
+                    //the current spot is the driveStart plus the total play yards
+                    // console.log("   play.yardsGained", play.yardsGained)
+                    // console.log("   playTotalYards", playTotalYards)
+                    currentStartSpotAbsolute = calculateEndSpotAbsolute(driveStartSpotAbsolute, playTotalYards, drive.direction)
+
+                    let currentPlayYards = 0;
+                    if (play.penaltyYards) {
+                        if (play.nullifyPlay) {
+                            currentPlayYards += play.penaltyYards;
+                        } else {
+                            currentPlayYards += play.yardsGained + (play.penaltyYards ? play.penaltyYards : 0);
+                        }
+                    } else {
+                        if (play.nullifyPlay) {
+                            currentPlayYards += 0;
+                        } else {
+                            currentPlayYards += play.yardsGained;
+                        }
+                    }
+
+                    console.log("   currentPlayYards", currentPlayYards)
+
+                    //drive marker calculations
+                    const currentEndSpotAbsolute = calculateEndSpotAbsolute(currentStartSpotAbsolute, currentPlayYards, drive.direction);
+
+                    console.log("   currentStartSpotAbsolute", currentStartSpotAbsolute)
+                    console.log("   currentEndSpotAbsolute", currentEndSpotAbsolute)
+
+                    let driveMarkerX = currentStartSpotAbsolute;
+                    let driveMarkerWidth = Math.abs(currentPlayYards);
+
+                    if (currentStartSpotAbsolute > currentEndSpotAbsolute) {
+                        driveMarkerX = currentEndSpotAbsolute;
+                    }
+
+                    console.log("   driveMarkerX", driveMarkerX)
+                    console.log("   driveMarkerWidth", driveMarkerWidth)
+
+                    playTotalYards += currentPlayYards;
+
+                    let playColor = driveColor;
+                    if (play.playType === "run") {
+                        playColor = "red";
+                    }
+                    if (play.playType === "pass") {
+                        playColor = "blue";
+                    }
+                    if (play.nullifyPlay) {
+                        playColor = "yellow";
+                    }
+
+                    let fillOpacity = 0.5;
+                    if (currentPlayYards < 0){
+                        fillOpacity = 0.2;
+                    }
+
+                    return (
+                        <Group left={0} top={index * playHeight} key={play.id}>
+                            {/*<text x={0} y={10}>{play.id}</text>*/}
+                            <text x={0} y={15}>{play.description}</text>
+                            <rect x={0} y={2} width={width} height={playHeight -4} fill={driveColor} fillOpacity={0.1} />
+                            <rect
+                                x={xField(driveMarkerX)}
+                                y={yScale(10)}
+                                width={xScale(driveMarkerWidth)}
+                                height={yScale(30)}
+                                fill={playColor} fillOpacity={fillOpacity}
+                            />
+                            <text x={xField(driveMarkerX + driveMarkerWidth) + 1} y={22}>{currentPlayYards}</text>
+                            {/* Transparent click handler*/}
+                            <rect x={0} y={2} width={width} height={playHeight -4} fill="transparent"
+                                  onClick={() => handleClick(play)}
+                                  style={{ cursor: 'pointer' }}
+                            />
+                        </Group>
+                    )
+                })}
+
+
+            </svg>
+        );
+    }, [drive.plays]);
 
     return (
         <div>
-            <h1>Drive Chart Graphic</h1>
-            <svg width={width} height={height}>
-                <rect x={0} y={0} width={width} height={height} fill="red"/>
-
-            </svg>
-
-
+            {memoizedSvg}
         </div>
     )
 }

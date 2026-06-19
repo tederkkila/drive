@@ -153,17 +153,34 @@ export const Drives: CollectionConfig = {
                                 'pass',
                                 'punt',
                                 'field_goal',
+                                'extra_point',
                                 'penalty',
-                                'interception',
-                                'fumble_recovered',
-                                'fumble_lost',
-                                'turnover_on_downs'
+                                'timeout',
                             ]
                         },
                         {name: 'yardsGained', type: 'number', required: true, admin: { width: '15%' },},
 
                     ]
                 },
+                { type: 'group', label: 'Penalty Details', fields: [
+                        { type: 'row', fields: [
+                                { name: 'penalty', type: 'text', required: false,
+                                    admin: {
+                                        description: "Enter Comma-separated list of penalties (ex. False Start, Offensive Holding)",
+                                    }
+                                },
+
+                                { name: 'penaltyYards', type: 'number', required: false, admin: { width: '15%'} },
+                            ]
+                        },
+                        { name: 'nullifyPlay', label: 'Penalty nullifies play', type: 'checkbox', required: false,
+                            admin: {
+                                description: "Check to nullify gains on this play an only use the penalty yards.",
+                            }
+                        },
+                    ]
+                },
+
             ],
         },
     ] as Field[],

@@ -43,19 +43,19 @@ export const GameView = ({ gameId }: GameViewProps) => {
 
         <GameContext.Provider value={contextValues}>
 
-                <Box>
-                    {/*<YouTubeEmbed*/}
-                    {/*    videoId={videoId}*/}
-                    {/*/>*/}
+                <Box className="bg-neutral-700">
                     <YouTubeAPIEmbed videoId={videoId} />
                 </Box>
 
-                <Box className="flex-1 overflow-y-scroll bg-gray-50">
+                <Box className="flex-1 overflow-y-scroll bg-gray-50
+                  [&::-webkit-scrollbar]:w-2
+                [&::-webkit-scrollbar-track]:bg-neutral-200
+                [&::-webkit-scrollbar-thumb]:bg-neutral-500
+                  [&::-webkit-scrollbar-thumb]:rounded"
+                >
                     <DriveChart drives={drives} />
 
-
                 </Box>
-
 
             </GameContext.Provider>
         </div>

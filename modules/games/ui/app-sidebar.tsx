@@ -23,8 +23,26 @@ import {
 
 // This is sample data.
 const data = {
-    versions: ["1.0.1", "1.1.0-alpha", "2.0.0-beta1"],
+    versions: ["NZL U18", "AUS U18"],
     navMain: [
+        {
+            title: "Drive Number",
+            url: "#",
+            items: [
+                {
+                    title: "001",
+                    url: "#",
+                },
+                {
+                    title: "002",
+                    url: "#",
+                },
+                {
+                    title: "003",
+                    url: "#",
+                },
+            ],
+        },
         {
             title: "Play Type",
             url: "#",

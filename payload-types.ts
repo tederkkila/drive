@@ -261,6 +261,7 @@ export interface Drive {
   game: string | Game;
   possessingTeam?: (string | null) | Team;
   driveNumber: number;
+  direction: 'left' | 'right';
   startFieldPosition: number;
   result?:
     | ('touchdown' | 'field_goal' | 'interception' | 'fumble_lost' | 'turnover_on_downs' | 'punt' | 'end_of_period')
@@ -275,20 +276,17 @@ export interface Drive {
         youTubeStart: number;
         youTubeEnd: number;
         description: string;
-        playType?:
-          | (
-              | 'run'
-              | 'pass'
-              | 'punt'
-              | 'field_goal'
-              | 'penalty'
-              | 'interception'
-              | 'fumble_recovered'
-              | 'fumble_lost'
-              | 'turnover_on_downs'
-            )
-          | null;
+        playType?: ('run' | 'pass' | 'punt' | 'field_goal' | 'extra_point' | 'penalty' | 'timeout') | null;
         yardsGained: number;
+        /**
+         * Enter Comma-separated list of penalties (ex. False Start, Offensive Holding)
+         */
+        penalty?: string | null;
+        penaltyYards?: number | null;
+        /**
+         * Check to nullify gains on this play an only use the penalty yards.
+         */
+        nullifyPlay?: boolean | null;
         id?: string | null;
       }[]
     | null;
@@ -504,6 +502,7 @@ export interface DrivesSelect<T extends boolean = true> {
   game?: T;
   possessingTeam?: T;
   driveNumber?: T;
+  direction?: T;
   startFieldPosition?: T;
   result?: T;
   plays?:
@@ -519,6 +518,9 @@ export interface DrivesSelect<T extends boolean = true> {
         description?: T;
         playType?: T;
         yardsGained?: T;
+        penalty?: T;
+        penaltyYards?: T;
+        nullifyPlay?: T;
         id?: T;
       };
   updatedAt?: T;
