@@ -4,7 +4,7 @@ import { Drive } from "@/payload-types";
 type Play = NonNullable<Drive["plays"]>[number];
 import { Group } from '@visx/group';
 import { scaleLinear } from "@visx/scale";
-import { getAbsolutePosition } from "@/modules/drives/ui/fieldCalculations";
+import { getAbsolutePosition, calculateEndSpotAbsolute } from "@/modules/drives/ui/fieldCalculations";
 import { Poppins } from "next/font/google";
 import { FieldGroup } from "@/modules/drives/ui/visx/FieldGroup";
 import { useGameVideo } from "@/modules/games/ui/GameContext";
