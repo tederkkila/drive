@@ -60,20 +60,20 @@ export const calculateDriveDistance = (startSpot: number, endSpot: number, drive
  */
 export const calculateEndSpotAbsolute = (startSpotAbsolute: number, driveDistance: number, driveDirection: 'left' | 'right'): number => {
 
-    //console.log("calculateEndSpotAbsolute: ", startSpotAbsolute, driveDistance, driveDirection)
+    console.log("   calculateEndSpotAbsolute: ", startSpotAbsolute, driveDistance, driveDirection)
     if (startSpotAbsolute < 0 || startSpotAbsolute > 100) {
         throw new Error('Invalid absolute start spot');
     }
 
     let endAbsoluteAbsolute = getAbsolutePosition(startSpotAbsolute, driveDirection);
-     //console.log("endAbsoluteAbsolute: ", endAbsoluteAbsolute);
+    console.log("   endAbsoluteAbsolute: ", endAbsoluteAbsolute);
 
     if (driveDirection === "left") {
         endAbsoluteAbsolute -= driveDistance;
     } else if (driveDirection === "right") {
         endAbsoluteAbsolute += driveDistance;
     }
-     //console.log("endAbsoluteAbsolute +: ", endAbsoluteAbsolute);
+    //console.log("endAbsoluteAbsolute +: ", endAbsoluteAbsolute);
 
     return endAbsoluteAbsolute;
 };

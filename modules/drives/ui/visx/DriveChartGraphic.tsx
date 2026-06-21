@@ -1,3 +1,5 @@
+'use client';
+
 import React from "react";
 import { useMemo } from "react";
 import { Drive } from "@/payload-types";
@@ -13,6 +15,16 @@ const poppins = Poppins({
     subsets: ["latin"],
     weight: ["700"],
 });
+
+import { useQueryStates, parseAsArrayOf, parseAsString } from 'nuqs';
+
+const groupParsers = {
+    playType: parseAsArrayOf(parseAsString).withDefault([]),
+    down: parseAsArrayOf(parseAsString).withDefault([]),
+    distance: parseAsArrayOf(parseAsString).withDefault([]),
+    gain: parseAsArrayOf(parseAsString).withDefault([]),
+    fieldPosition: parseAsArrayOf(parseAsString).withDefault([]),
+};
 
 // const fieldColor = "#ccd5cc";
 const fieldColor = "#e9e9e9";
@@ -199,6 +211,10 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
 
     //console.log("drive", drive.driveNumber)
 
+    const [filters, setFilters] = useQueryStates(groupParsers);
+
+    const hasDownFilters = filters.down.length > 0;
+
     if (!drive.plays) return null;
     if (width === 0) return null;
     if (height === 0) return null;
@@ -208,6 +224,7 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
     //console.log("parent height", height)
 
     let driveStartSpotAbsolute = getAbsolutePosition(drive.startFieldPosition, drive.direction);
+    console.log("driveStartSpotAbsolute", driveStartSpotAbsolute)
 
     const xScale = scaleLinear<number>({
         domain: [0, totalLengthYards],
@@ -248,11 +265,17 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
 
                 {drive.plays.map((play, index) => {
 
-                    // console.log("***** PROCESS PLAY *****")
-                    //the current spot is the driveStart plus the total play yards
-                    // console.log("   play.yardsGained", play.yardsGained)
-                    // console.log("   playTotalYards", playTotalYards)
+                    console.log("drive.direction", drive.direction)
+                    console.log("drive.startFieldPosition", drive.startFieldPosition)
+
+                    let filtered = false;
+                    if (filters.down.length > 0 && !filters.down.includes(String(play.down))) {
+                        //console.log("play.down not in filters.down", play.down)
+                        filtered = true;
+                    }
+
                     currentStartSpotAbsolute = calculateEndSpotAbsolute(driveStartSpotAbsolute, playTotalYards, drive.direction)
+                    console.log("currentStartSpotAbsolute", currentStartSpotAbsolute)
 
                     let currentPlayYards = 0;
                     if (play.penaltyYards) {
@@ -305,6 +328,13 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                         fillOpacity = 0.2;
                     }
 
+                    let clickFill = "transparent";
+                    let clickFillOpacity = 0.0;
+                    if (filtered) {
+                        clickFill = fieldColor;
+                        clickFillOpacity = 0.9;
+                    }
+
                     const los = calculateEndSpotAbsolute(currentStartSpotAbsolute, play.yardsToGo, drive.direction);
 
 
@@ -327,7 +357,9 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                             />
                             <text x={xField(driveMarkerX + driveMarkerWidth) + 2} y={22}>{currentPlayYards}</text>
                             {/* Transparent click handler*/}
-                            <rect x={0} y={2} width={width} height={playHeight -4} fill="transparent"
+                            <rect x={0} y={2} width={width} height={playHeight -4}
+                                  fill={clickFill}
+                                  fillOpacity={clickFillOpacity}
                                   onClick={() => handleClick(play)}
                                   style={{ cursor: 'pointer' }}
                             />
@@ -338,7 +370,7 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
 
             </svg>
         );
-    }, [drive.plays]);
+    }, [drive.plays, filters]);
 
     return (
         <div>

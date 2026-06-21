@@ -1,3 +1,4 @@
+import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import type { Metadata } from "next";
 import { TRPCReactProvider } from "@/trpc/client";
 
@@ -32,12 +33,14 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+      <NuqsAdapter>
         <TRPCReactProvider>
           <Theme radius="medium">
             {children}
             {/*<ThemePanel />*/}
           </Theme>
         </TRPCReactProvider>
+      </NuqsAdapter>
       </body>
     </html>
   );

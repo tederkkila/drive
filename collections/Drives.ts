@@ -93,7 +93,12 @@ export const Drives: CollectionConfig = {
         {
             name: 'plays',
             type: 'array',
-            admin: { initCollapsed: true },
+            admin: {
+                components: {
+                    RowLabel: '@/components/payload/PlayRowLabel#PlayRowLabel',
+                },
+                initCollapsed: true,
+            },
             fields: [
                 {type: "row", fields: [
                         { name: 'playNumber', type: 'number', required: true, admin: { width: '15%' }, },
@@ -158,7 +163,31 @@ export const Drives: CollectionConfig = {
                                 'timeout',
                             ]
                         },
-                        {name: 'yardsGained', type: 'number', required: true, admin: { width: '15%' },},
+                        { name: 'startFieldPosition', type: 'number', required: true },
+                        { name: 'endFieldPosition', type: 'number', required: true },
+
+                        {name: 'yardsGained', type: 'number', required: true,
+                            admin: {
+                                readOnly: true,
+                                width: '15%'
+                            },
+                            hooks: {
+                                beforeChange: [
+                                    ({ siblingData }) => {
+                                        const start = siblingData?.startFieldPosition;
+                                        const end = siblingData?.endFieldPosition;
+
+                                        if (typeof start === 'number' && typeof end === 'number') {
+                                            // Standard football calculation: End Position minus Start Position
+                                            return end - start;
+                                        }
+
+                                        return 0;
+
+                                    }
+                                ]
+                            }
+                        },
 
                     ]
                 },
