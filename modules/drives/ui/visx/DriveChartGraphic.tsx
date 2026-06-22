@@ -278,13 +278,13 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                         filters.distance.forEach((distance) => {
                             if (distance == 'long' && play.yardsToGo > 10) {
                                 distanceFiltered = false;
-                            } else if (distance == 10 && 7 <= play.yardsToGo && play.yardsToGo < 10) {
+                            } else if (distance.includes("10") && 7 <= play.yardsToGo && play.yardsToGo < 10) {
                                 distanceFiltered = false;
 
-                            } else if (distance == 6 && 3 <= play.yardsToGo && play.yardsToGo < 6) {
+                            } else if (distance.includes("6") && 3 <= play.yardsToGo && play.yardsToGo < 6) {
                                 distanceFiltered = false;
 
-                            } else if (0 <= play.yardsToGo && play.yardsToGo < 3) {
+                            } else if (distance.includes("3") && 0 <= play.yardsToGo && play.yardsToGo < 3) {
                                 distanceFiltered = false;
                             }
 
