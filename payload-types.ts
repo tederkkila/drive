@@ -277,6 +277,8 @@ export interface Drive {
         youTubeEnd: number;
         description: string;
         playType?: ('run' | 'pass' | 'punt' | 'field_goal' | 'extra_point' | 'penalty' | 'timeout') | null;
+        startFieldPosition: number;
+        endFieldPosition: number;
         yardsGained: number;
         /**
          * Enter Comma-separated list of penalties (ex. False Start, Offensive Holding)
@@ -517,6 +519,8 @@ export interface DrivesSelect<T extends boolean = true> {
         youTubeEnd?: T;
         description?: T;
         playType?: T;
+        startFieldPosition?: T;
+        endFieldPosition?: T;
         yardsGained?: T;
         penalty?: T;
         penaltyYards?: T;

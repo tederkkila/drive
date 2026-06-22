@@ -1,7 +1,6 @@
 'use client';
 
-import React from "react";
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { Drive } from "@/payload-types";
 type Play = NonNullable<Drive["plays"]>[number];
 import { Group } from '@visx/group';
@@ -132,10 +131,6 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
         driveMarkerX = endSpotAbsolute;
     }
 
-    const directionTrianglePoints = `${xField(driveMarkerX - 1.5).toString()} ${yScale((30+20+20)/2)},`
-        + `${xField(driveMarkerX - 0.15).toString()} ${yScale(20)},`
-        + `${xField(driveMarkerX - 0.15).toString()} ${yScale(30+20)},`
-
     const memoizedSvg = useMemo(() => {
         return (
             <svg width={width} height={height} style={{ backgroundColor: fieldColor, fontFamily: `${poppins}, Arial, sans-serif`, display: 'block' }}>
@@ -160,14 +155,9 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
                         y={20}
                         width={driveMarkerWidth}
                         height={30}
-                        fill={driveColor}
+                        driveColor={driveColor}
                         direction={drive.direction}
                     />
-                    {/*<polygon*/}
-                    {/*    points={directionTrianglePoints}*/}
-                    {/*    fill={driveColor}*/}
-                    {/*    // stroke={"#555555"} strokeWidth={"1"}*/}
-                    {/*/>*/}
 
                     <rect
                         x={xField(driveMarkerX)}
@@ -220,22 +210,13 @@ interface DriveChartGraphicProps {
 
 export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicProps) => {
 
-    //console.log("drive", drive.driveNumber)
-
     const [filters, setFilters] = useQueryStates(groupParsers);
-
-    const hasDownFilters = filters.down.length > 0;
 
     if (!drive.plays) return null;
     if (width === 0) return null;
     if (height === 0) return null;
 
     const playHeight = 40;
-    //const height = playHeight * drive.plays.length;
-    //console.log("parent height", height)
-
-    let driveStartSpotAbsolute = getAbsolutePosition(drive.startFieldPosition, drive.direction);
-    //console.log("driveStartSpotAbsolute", driveStartSpotAbsolute)
 
     const xScale = scaleLinear<number>({
         domain: [0, totalLengthYards],
@@ -264,7 +245,6 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
 
     const memoizedSvg = useMemo(() => {
 
-        let currentStartSpotAbsolute = driveStartSpotAbsolute;
         let playTotalYards = 0
 
         if (!drive.plays) return null;
@@ -276,17 +256,19 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
 
                 {drive.plays.map((play, index) => {
 
-                    //console.log("drive.direction", drive.direction)
-                    //console.log("drive.startFieldPosition", drive.startFieldPosition)
+                    console.log("filters.playType", filters.playType)
+                    console.log("play.playType", play.playType)
 
                     let filtered = false;
-                    if (filters.down.length > 0 && !filters.down.includes(String(play.down))) {
-                        //console.log("play.down not in filters.down", play.down)
+                    let downFiltered = (filters.down.length > 0 && !filters.down.includes(String(play.down)));
+                    let playTypeFiltered = (filters.playType.length > 0 && !filters.playType.includes(String(play.playType)));
+
+                    if (downFiltered || playTypeFiltered) {
                         filtered = true;
                     }
 
-                    currentStartSpotAbsolute = calculateEndSpotAbsolute(driveStartSpotAbsolute, playTotalYards, drive.direction)
-                    //console.log("currentStartSpotAbsolute", currentStartSpotAbsolute)
+                    const startSpotAbsolute = getAbsolutePosition(play.startFieldPosition, drive.direction)
+                    const endSpotAbsolute = getAbsolutePosition(play.endFieldPosition, drive.direction)
 
                     let currentPlayYards = 0;
                     if (play.penaltyYards) {
@@ -303,19 +285,13 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                         }
                     }
 
-                    //console.log("   currentPlayYards", currentPlayYards)
-
                     //drive marker calculations
-                    const currentEndSpotAbsolute = calculateEndSpotAbsolute(currentStartSpotAbsolute, currentPlayYards, drive.direction);
 
-                    //console.log("   currentStartSpotAbsolute", currentStartSpotAbsolute)
-                    //console.log("   currentEndSpotAbsolute", currentEndSpotAbsolute)
-
-                    let driveMarkerX = currentStartSpotAbsolute;
+                    let driveMarkerX = startSpotAbsolute;
                     let driveMarkerWidth = Math.abs(currentPlayYards);
 
-                    if (currentStartSpotAbsolute > currentEndSpotAbsolute) {
-                        driveMarkerX = currentEndSpotAbsolute;
+                    if (startSpotAbsolute > endSpotAbsolute) {
+                        driveMarkerX = endSpotAbsolute;
                     }
 
                     //console.log("   driveMarkerX", driveMarkerX)
@@ -346,12 +322,12 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                         clickFillOpacity = 0.9;
                     }
 
-                    const los = calculateEndSpotAbsolute(currentStartSpotAbsolute, play.yardsToGo, drive.direction);
+                    const los = calculateEndSpotAbsolute(startSpotAbsolute, play.yardsToGo, drive.direction);
 
-                    console.log(`play: ${   play.playNumber}` +
-                    `   start: ${getFootballSpot(currentStartSpotAbsolute, drive.direction)}` +
-                    `   end: ${getFootballSpot(currentEndSpotAbsolute, drive.direction)}` +
-                    `   yards: ${currentPlayYards}`)
+                    /*console.log(`play: ${   play.playNumber}` +
+                    `   start: ${getFootballSpot(startSpotAbsolute, drive.direction)}` +
+                    `   end: ${getFootballSpot(endSpotAbsolute, drive.direction)}` +
+                    `   yards: ${currentPlayYards}`)*/
 
 
                     return (

@@ -3,17 +3,32 @@
 import React from 'react'
 import { useRowLabel } from '@payloadcms/ui'
 
+type PlayRowLabelData = {
+    title?: string
+    youTubeStart?: string | number | null
+    youTubeEnd?: string | number | null
+    quarter?: string | number | null
+    down?: string | number | null
+    yardsToGo?: string | number | null
+    startFieldPosition?: string | number | null
+}
+
 export const PlayRowLabel = () => {
-    // Replace 'title' with whichever field name you want to display
-    const { data, rowNumber } = useRowLabel<{ title?: string }>()
+
+    const { data, rowNumber } = useRowLabel<PlayRowLabelData>()
+
+    let i =0;
+    if (!data || !rowNumber) {
+        return `Play ${String(i++ + 1).padStart(2, '0')}`
+    }
 
     if (
-        !data.youTubeStart ||
-        !data.youTubeEnd ||
-        !data.quarter ||
-        !data.down ||
-        !data.yardsToGo ||
-        !data.startFieldPosition
+        data.youTubeStart == null ||
+        data.youTubeEnd == null ||
+        data.quarter == null ||
+        data.down == null ||
+        data.yardsToGo == null ||
+        data.startFieldPosition == null
     ) return `Play ${String(rowNumber + 1).padStart(2, '0')}`
 
     return (
