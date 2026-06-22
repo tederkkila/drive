@@ -5,7 +5,7 @@ import { Drive } from "@/payload-types";
 type Play = NonNullable<Drive["plays"]>[number];
 import { Group } from '@visx/group';
 import { scaleLinear } from "@visx/scale";
-import { getAbsolutePosition, calculateEndSpotAbsolute, getFootballSpot } from "@/modules/drives/ui/fieldCalculations";
+import { getAbsolutePosition, calculateEndSpotAbsolute } from "@/modules/drives/ui/fieldCalculations";
 import { Poppins } from "next/font/google";
 import { FieldGroup } from "@/modules/drives/ui/visx/FieldGroup";
 import { useGameVideo } from "@/modules/games/ui/GameContext";
@@ -57,9 +57,7 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
     let penaltyYards = 0;
     let timeouts = 0;
 
-    drive.plays?.forEach((play, index, arr) => {
-        //const isLast: boolean = index === arr.length - 1;
-        //console.log("play", play)
+    drive.plays?.forEach((play) => {
 
         const nullifyPlay: boolean = !!(play.nullifyPlay);
 
@@ -94,9 +92,6 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
             timeouts++;
         }
 
-        // if(isLast) {
-        //
-        // }
     })
 
     const totalYards = runYards + passYards;

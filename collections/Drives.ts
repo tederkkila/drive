@@ -1,11 +1,8 @@
 import type { CollectionConfig, Field } from 'payload'
 import {
     getAbsolutePosition,
-    calculateEndSpotAbsolute,
-    getFootballSpot,
     calculateDriveDistance
 } from "@/modules/drives/ui/fieldCalculations";
-import { data } from "happy-dom/lib/PropertySymbol";
 
 export const Drives: CollectionConfig = {
     slug: 'drives',
@@ -195,7 +192,7 @@ export const Drives: CollectionConfig = {
                                             // console.log('absoluteStart', absoluteStart);
                                             // console.log('absoluteEnd', absoluteEnd);
 
-                                            return calculateDriveDistance(start, end, direction);
+                                            return calculateDriveDistance(absoluteStart, absoluteEnd, direction);
 
                                             // // Standard football calculation: End Position minus Start Position
                                             // return end - start;
