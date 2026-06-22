@@ -6,11 +6,12 @@ import { Drive } from "@/payload-types";
 type Play = NonNullable<Drive["plays"]>[number];
 import { Group } from '@visx/group';
 import { scaleLinear } from "@visx/scale";
-import { getAbsolutePosition, calculateEndSpotAbsolute } from "@/modules/drives/ui/fieldCalculations";
+import { getAbsolutePosition, calculateEndSpotAbsolute, getFootballSpot } from "@/modules/drives/ui/fieldCalculations";
 import { Poppins } from "next/font/google";
 import { FieldGroup } from "@/modules/drives/ui/visx/FieldGroup";
 import { useGameVideo } from "@/modules/games/ui/GameContext";
 import { PlayGraphic } from "@/modules/drives/ui/visx/PlayGraphic";
+import { DirectionTriangle } from "@/modules/drives/ui/visx/DirectionTriangle";
 const poppins = Poppins({
     subsets: ["latin"],
     weight: ["700"],
@@ -152,11 +153,21 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
                     />
 
                     {/* Drive Row Graphic   */}
-                    <polygon
-                        points={directionTrianglePoints}
+                    <DirectionTriangle
+                        xField={xField}
+                        yScale={yScale}
+                        x={driveMarkerX}
+                        y={20}
+                        width={driveMarkerWidth}
+                        height={30}
                         fill={driveColor}
-                        // stroke={"#555555"} strokeWidth={"1"}
+                        direction={drive.direction}
                     />
+                    {/*<polygon*/}
+                    {/*    points={directionTrianglePoints}*/}
+                    {/*    fill={driveColor}*/}
+                    {/*    // stroke={"#555555"} strokeWidth={"1"}*/}
+                    {/*/>*/}
 
                     <rect
                         x={xField(driveMarkerX)}
@@ -224,7 +235,7 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
     //console.log("parent height", height)
 
     let driveStartSpotAbsolute = getAbsolutePosition(drive.startFieldPosition, drive.direction);
-    console.log("driveStartSpotAbsolute", driveStartSpotAbsolute)
+    //console.log("driveStartSpotAbsolute", driveStartSpotAbsolute)
 
     const xScale = scaleLinear<number>({
         domain: [0, totalLengthYards],
@@ -265,8 +276,8 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
 
                 {drive.plays.map((play, index) => {
 
-                    console.log("drive.direction", drive.direction)
-                    console.log("drive.startFieldPosition", drive.startFieldPosition)
+                    //console.log("drive.direction", drive.direction)
+                    //console.log("drive.startFieldPosition", drive.startFieldPosition)
 
                     let filtered = false;
                     if (filters.down.length > 0 && !filters.down.includes(String(play.down))) {
@@ -275,7 +286,7 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                     }
 
                     currentStartSpotAbsolute = calculateEndSpotAbsolute(driveStartSpotAbsolute, playTotalYards, drive.direction)
-                    console.log("currentStartSpotAbsolute", currentStartSpotAbsolute)
+                    //console.log("currentStartSpotAbsolute", currentStartSpotAbsolute)
 
                     let currentPlayYards = 0;
                     if (play.penaltyYards) {
@@ -336,6 +347,11 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                     }
 
                     const los = calculateEndSpotAbsolute(currentStartSpotAbsolute, play.yardsToGo, drive.direction);
+
+                    console.log(`play: ${   play.playNumber}` +
+                    `   start: ${getFootballSpot(currentStartSpotAbsolute, drive.direction)}` +
+                    `   end: ${getFootballSpot(currentEndSpotAbsolute, drive.direction)}` +
+                    `   yards: ${currentPlayYards}`)
 
 
                     return (

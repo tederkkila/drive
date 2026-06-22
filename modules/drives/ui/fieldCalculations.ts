@@ -10,11 +10,11 @@ export const getAbsolutePosition = (spot: number, direction: 'left' | 'right'): 
     if (direction === 'right') {
         // -45 right | < 0 ? 45* : 55
         // +45 right | < 0 ? 45  : 55*
-        absolute = (spot <= 0) ? Math.abs(spot) : 100 - spot;
+        absolute = (spot < 0) ? Math.abs(spot) : 100 - spot;
     } else if (direction === 'left') {
         // -45 left | < 0 ? 55* : 45
         // +45 left | < 0 ? 55  : 45*
-        absolute = (spot <= 0) ? 100 - Math.abs(spot) : Math.abs(spot);
+        absolute = (spot < 0) ? 100 - Math.abs(spot) : Math.abs(spot);
     }
 
     return absolute;
@@ -24,20 +24,30 @@ export const getAbsolutePosition = (spot: number, direction: 'left' | 'right'): 
 // Helper to convert absolute 0-100 position back to football coordinates
 export const getFootballSpot = (absolute: number, direction: 'left' | 'right'): number => {
 
-    let spot: number = 0
+    let spot: number = 50
 
     if (direction !== 'left' && direction !== 'right') {
         throw new Error('Invalid direction');
     }
 
     if (direction === 'right') {
-        // 55 right | <= 50 ? -55  : 45*
-        // 45 right | <= 50 ? -45* : 55
-        spot =  absolute <= 50 ? -absolute : 100 - absolute;
+        if (50 < absolute) {
+            // we are going right so this is a positive number ex 55 absolute => 45 yield
+            spot = 100 - absolute;
+        } else {
+            // we are going right so this is a negative number ex 45 absolute => -45 yield
+            spot = absolute;
+
+        }
     } else if (direction === 'left') {
-        // 55 left  | <= 50 ? -55  : 45*
-        // 45 left  | <= 50 ? -55* : 45
-        spot =  absolute <= 50 ? 100 - absolute : -absolute;
+        if (absolute < 50) {
+            // we are going left so this is a positive number ex 45 absolute => 45 yield
+            spot = absolute;
+        } else {
+            // we are going left so this is a negative number ex 55 absolute => -45 yield
+            spot = -100 + absolute;
+
+        }
     }
 
     return spot;
@@ -48,11 +58,19 @@ export const getFootballSpot = (absolute: number, direction: 'left' | 'right'): 
  * Calculates the exact physical yards gained between two field spots.
  */
 export const calculateDriveDistance = (startSpot: number, endSpot: number, driveDirection: 'left' | 'right'): number => {
+
+    //console.log("calculateDriveDistance: ", startSpot, endSpot, driveDirection, typeof driveDirection)
     const startAbsolute = getAbsolutePosition(startSpot, driveDirection);
     const endAbsolute = getAbsolutePosition(endSpot, driveDirection);
 
     // Returns positive for moving forward, negative for moving backward
-    return endAbsolute - startAbsolute;
+    let distance = 0
+    if (driveDirection === "left") {
+        distance = startAbsolute - endAbsolute;
+    } else if (driveDirection === "right") {
+        distance = endAbsolute - startAbsolute;
+    }
+    return distance;
 };
 
 /**
@@ -60,13 +78,13 @@ export const calculateDriveDistance = (startSpot: number, endSpot: number, drive
  */
 export const calculateEndSpotAbsolute = (startSpotAbsolute: number, driveDistance: number, driveDirection: 'left' | 'right'): number => {
 
-    console.log("   calculateEndSpotAbsolute: ", startSpotAbsolute, driveDistance, driveDirection)
+    //console.log("   calculateEndSpotAbsolute: ", startSpotAbsolute, driveDistance, driveDirection)
     if (startSpotAbsolute < 0 || startSpotAbsolute > 100) {
         throw new Error('Invalid absolute start spot');
     }
 
-    let endAbsoluteAbsolute = getAbsolutePosition(startSpotAbsolute, driveDirection);
-    console.log("   endAbsoluteAbsolute: ", endAbsoluteAbsolute);
+    let endAbsoluteAbsolute = startSpotAbsolute;
+    // console.log("   endAbsoluteAbsolute: ", endAbsoluteAbsolute);
 
     if (driveDirection === "left") {
         endAbsoluteAbsolute -= driveDistance;

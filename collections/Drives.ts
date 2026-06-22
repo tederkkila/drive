@@ -1,4 +1,11 @@
 import type { CollectionConfig, Field } from 'payload'
+import {
+    getAbsolutePosition,
+    calculateEndSpotAbsolute,
+    getFootballSpot,
+    calculateDriveDistance
+} from "@/modules/drives/ui/fieldCalculations";
+import { data } from "happy-dom/lib/PropertySymbol";
 
 export const Drives: CollectionConfig = {
     slug: 'drives',
@@ -163,8 +170,8 @@ export const Drives: CollectionConfig = {
                                 'timeout',
                             ]
                         },
-                        { name: 'startFieldPosition', type: 'number', required: true },
-                        { name: 'endFieldPosition', type: 'number', required: true },
+                        { name: 'startFieldPosition', type: 'number', required: true, admin: { width: '15%' }, },
+                        { name: 'endFieldPosition', type: 'number', required: true, admin: { width: '15%' }, },
 
                         {name: 'yardsGained', type: 'number', required: true,
                             admin: {
@@ -173,13 +180,25 @@ export const Drives: CollectionConfig = {
                             },
                             hooks: {
                                 beforeChange: [
-                                    ({ siblingData }) => {
+                                    ({ siblingData, data }) => {
                                         const start = siblingData?.startFieldPosition;
                                         const end = siblingData?.endFieldPosition;
+                                        const direction = data?.direction;
+
 
                                         if (typeof start === 'number' && typeof end === 'number') {
-                                            // Standard football calculation: End Position minus Start Position
-                                            return end - start;
+                                            console.log('direction', direction);
+
+                                            const absoluteStart = getAbsolutePosition(start, direction)
+                                            const absoluteEnd = getAbsolutePosition(end, direction)
+
+                                            console.log('absoluteStart', absoluteStart);
+                                            console.log('absoluteEnd', absoluteEnd);
+
+                                            return calculateDriveDistance(start, end, direction);
+
+                                            // // Standard football calculation: End Position minus Start Position
+                                            // return end - start;
                                         }
 
                                         return 0;

@@ -9,12 +9,16 @@ export const PlayRowLabel = () => {
 
     if (
         !data.youTubeStart ||
-        !data.down
+        !data.youTubeEnd ||
+        !data.quarter ||
+        !data.down ||
+        !data.yardsToGo ||
+        !data.startFieldPosition
     ) return `Play ${String(rowNumber + 1).padStart(2, '0')}`
 
     return (
         <div>
-            {data.youTubeStart} | {data.down}-{data.yardsToGo}
+            Q{data.quarter} Play {String(rowNumber + 1).padStart(2, '0')} [{data.youTubeStart} - {data.youTubeEnd}] {data.down}-{data.yardsToGo} [{data.startFieldPosition}]
         </div>
     )
 }
