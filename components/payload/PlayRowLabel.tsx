@@ -17,10 +17,12 @@ export const PlayRowLabel = () => {
 
     const { data, rowNumber } = useRowLabel<PlayRowLabelData>()
 
-    let i =0;
-    if (!data || !rowNumber) {
+
+    let i = 0;
+    if (!data || rowNumber == null) {
         return `Play ${String(i++ + 1).padStart(2, '0')}`
     }
+
 
     if (
         data.youTubeStart == null ||

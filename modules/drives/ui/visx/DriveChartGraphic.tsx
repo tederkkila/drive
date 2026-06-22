@@ -258,6 +258,8 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                     let downFiltered = (filters.down.length > 0 && !filters.down.includes(String(play.down)));
                     let playTypeFiltered = (filters.playType.length > 0 && !filters.playType.includes(String(play.playType)));
 
+                    //TODO Include play.nullifyPlay in filter for penalty
+
                     if (downFiltered || playTypeFiltered) {
                         filtered = true;
                     }

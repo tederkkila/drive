@@ -184,18 +184,12 @@ export const Drives: CollectionConfig = {
 
 
                                         if (typeof start === 'number' && typeof end === 'number') {
-                                            //console.log('direction', direction);
 
                                             const absoluteStart = getAbsolutePosition(start, direction)
                                             const absoluteEnd = getAbsolutePosition(end, direction)
 
-                                            // console.log('absoluteStart', absoluteStart);
-                                            // console.log('absoluteEnd', absoluteEnd);
-
                                             return calculateDriveDistance(absoluteStart, absoluteEnd, direction);
 
-                                            // // Standard football calculation: End Position minus Start Position
-                                            // return end - start;
                                         }
 
                                         return 0;
