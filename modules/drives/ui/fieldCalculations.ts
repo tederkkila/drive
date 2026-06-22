@@ -17,6 +17,8 @@ export const getAbsolutePosition = (spot: number, direction: 'left' | 'right'): 
         absolute = (spot < 0) ? 100 - Math.abs(spot) : Math.abs(spot);
     }
 
+    //console.log("getAbsolutePosition: ", spot, direction, absolute)
+
     return absolute;
 
 };
@@ -57,11 +59,9 @@ export const getFootballSpot = (absolute: number, direction: 'left' | 'right'): 
 /**
  * Calculates the exact physical yards gained between two field spots.
  */
-export const calculateDriveDistance = (startSpot: number, endSpot: number, driveDirection: 'left' | 'right'): number => {
+export const calculateAbsoluteDriveDistance = (startAbsolute: number, endAbsolute: number, driveDirection: 'left' | 'right'): number => {
 
-    //console.log("calculateDriveDistance: ", startSpot, endSpot, driveDirection, typeof driveDirection)
-    const startAbsolute = getAbsolutePosition(startSpot, driveDirection);
-    const endAbsolute = getAbsolutePosition(endSpot, driveDirection);
+    //console.log("calculateDriveDistance: ", startAbsolute, endAbsolute, driveDirection, typeof driveDirection)
 
     // Returns positive for moving forward, negative for moving backward
     let distance = 0

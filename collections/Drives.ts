@@ -1,7 +1,7 @@
 import type { CollectionConfig, Field } from 'payload'
 import {
     getAbsolutePosition,
-    calculateDriveDistance
+    calculateAbsoluteDriveDistance
 } from "@/modules/drives/ui/fieldCalculations";
 
 export const Drives: CollectionConfig = {
@@ -105,7 +105,7 @@ export const Drives: CollectionConfig = {
             },
             fields: [
                 {type: "row", fields: [
-                        { name: 'playNumber', type: 'number', required: true, admin: { width: '15%' }, },
+                        { name: 'playNumber', type: 'number', required: false, admin: { hidden: true, width: '15%' }, },
                         { name: 'quarter', type: 'number', required: true, admin: { width: '15%' }, },
                         { name: 'down', type: 'number', required: true, admin: { width: '15%' },
                             validate: (val: number) => {
@@ -185,10 +185,18 @@ export const Drives: CollectionConfig = {
 
                                         if (typeof start === 'number' && typeof end === 'number') {
 
+                                            console.log('start', start);
+                                            console.log('end', end);
+
                                             const absoluteStart = getAbsolutePosition(start, direction)
                                             const absoluteEnd = getAbsolutePosition(end, direction)
 
-                                            return calculateDriveDistance(absoluteStart, absoluteEnd, direction);
+                                            console.log('absoluteStart', absoluteStart);
+                                            console.log('absoluteEnd', absoluteEnd);
+                                            console.log('direction', direction);
+                                            console.log(calculateAbsoluteDriveDistance(absoluteStart, absoluteEnd, direction))
+
+                                            return calculateAbsoluteDriveDistance(absoluteStart, absoluteEnd, direction);
 
                                         }
 

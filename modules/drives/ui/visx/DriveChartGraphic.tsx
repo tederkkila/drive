@@ -48,6 +48,8 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
     // console.log("width", width)
     // console.log("height", height)
 
+    let currentDriveColor = driveColor;
+
     let runCount = 0;
     let runYards = 0;
     let passCount = 0;
@@ -94,7 +96,7 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
 
     })
 
-    const totalYards = runYards + passYards;
+    const totalYards = runYards + passYards + penaltyYards;
 
     const startSpotAbsolute = getAbsolutePosition(drive.startFieldPosition, drive.direction);
 
@@ -124,6 +126,12 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
 
     if (startSpotAbsolute > endSpotAbsolute) {
         driveMarkerX = endSpotAbsolute;
+    }
+
+    if (drive.result === "touchdown") {
+        currentDriveColor = 'green';
+    } else if (drive.result === "field_goal") {
+        currentDriveColor = 'yellow';
     }
 
     const memoizedSvg = useMemo(() => {
@@ -160,7 +168,7 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
                         width={xScale(driveMarkerWidth)}
                         height={yScale(30)}
                         // stroke="#555555" strokeWidth={1}
-                        fill={driveColor} fillOpacity={0.5}
+                        fill={currentDriveColor} fillOpacity={0.5}
                     />
 
                     <text
@@ -251,16 +259,39 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
 
                 {drive.plays.map((play, index) => {
 
-                    console.log("filters.playType", filters.playType)
-                    console.log("play.playType", play.playType)
-
                     let filtered = false;
+
                     let downFiltered = (filters.down.length > 0 && !filters.down.includes(String(play.down)));
+
                     let playTypeFiltered = (filters.playType.length > 0 && !filters.playType.includes(String(play.playType)));
+                    if (playTypeFiltered && filters.playType.includes(String('penalty'))) {
 
-                    //TODO Include play.nullifyPlay in filter for penalty
+                        if (play.penaltyYards) {
+                            playTypeFiltered = false;
+                        }
 
-                    if (downFiltered || playTypeFiltered) {
+                    }
+
+                    let distanceFiltered =  false
+                    if (filters.distance.length > 0) {
+                        distanceFiltered = true;
+                        filters.distance.forEach((distance) => {
+                            if (distance == 'long' && play.yardsToGo > 10) {
+                                distanceFiltered = false;
+                            } else if (distance == 10 && 7 <= play.yardsToGo && play.yardsToGo < 10) {
+                                distanceFiltered = false;
+
+                            } else if (distance == 6 && 3 <= play.yardsToGo && play.yardsToGo < 6) {
+                                distanceFiltered = false;
+
+                            } else if (0 <= play.yardsToGo && play.yardsToGo < 3) {
+                                distanceFiltered = false;
+                            }
+
+                        })
+                    }
+
+                    if (downFiltered || playTypeFiltered || distanceFiltered) {
                         filtered = true;
                     }
 
