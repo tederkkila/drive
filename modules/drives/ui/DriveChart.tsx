@@ -48,9 +48,9 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
     return (
         <div>
             <Accordion
-                type="single"
-                collapsible
-                //defaultValue="shipping"
+                type="multiple"
+                // collapsible
+                // defaultValue="shipping"
                 className="w-full space-y-1"
             >
                 {validDrives.map((drive) => (
@@ -91,7 +91,7 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
                                 style={{height: `${drive.plays.length * 40}px`}}
                                 // className={`tedtest h-[${drive.plays.length * 40}px] w-full`}
                             >
-                                <ParentSize debounceTime={50} className={""}>{ ({ width, height }) => {
+                                <ParentSize debounceTime={500} className={""}>{ ({ width, height }) => {
                                     if (width === 0 || height === 0) return null;
                                     return (
                                         <DriveChartGraphic drive={drive} width={width} height={height} />

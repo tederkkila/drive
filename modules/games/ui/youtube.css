@@ -5,6 +5,15 @@
     position: relative;
     margin: 0 auto;
     max-width: min(1280px, 88.88vh);
+    background: #000;
+}
+
+/* Ensure the wrapper expands to fill everything when full-screened by the browser */
+.video-responsive-wrapper:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    aspect-ratio: auto;
 }
 
 /* Force the internal iframe to take up 100% of the box space */

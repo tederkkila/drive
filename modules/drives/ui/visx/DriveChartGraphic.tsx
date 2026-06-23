@@ -44,10 +44,7 @@ interface DriveChartTriggerGraphicProps {
 
 export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTriggerGraphicProps) => {
 
-    // console.log("drive", drive)
-    // console.log("width", width)
-    // console.log("height", height)
-
+    //console.log("DriveChartTriggerGraphic", width)
     let currentDriveColor = driveColor;
 
     let runCount = 0;
@@ -140,7 +137,6 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
                 <Group>
 
                     <FieldGroup
-                        xScale={xScale}
                         yScale={yScale}
                         width={width}
                         height={height}
@@ -176,7 +172,7 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
                         y={yScale(11)}
                         fill={lineColor}
                         fillOpacity={0.85}
-                        fontSize={Math.max(12, width * 0.015)}
+                        fontSize={12}
                         fontWeight="400"
                         textAnchor="start"
                         //letterSpacing="2"
@@ -213,6 +209,8 @@ interface DriveChartGraphicProps {
 
 export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicProps) => {
 
+
+    //console.log("DriveChartGraphic", width)
     const [filters, setFilters] = useQueryStates(groupParsers);
 
     if (!drive.plays) return null;
@@ -240,7 +238,7 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
         // event: React.MouseEvent<SVGRectElement, MouseEvent>,
         play: Play
     ) => {
-        console.log("handleClick", play)
+        //console.log("handleClick", play)
 
         setStartTime(play.youTubeStart);
         setEndTime(play.youTubeEnd);
@@ -254,7 +252,9 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
 
         return (
             <svg width={width} height={height} className="fade-in duration-200">
-                <rect x={0} y={0} width={width} height={height} fill={fieldColor}/>
+                {/*<rect x={0} y={0} width={width} height={height} fill={fieldColor}/>*/}
+                <Group top={0} left={0}>
+
 
 
                 {drive.plays.map((play, index) => {
@@ -296,15 +296,18 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                     }
 
                     const startSpotAbsolute = getAbsolutePosition(play.startFieldPosition, drive.direction)
-                    const endSpotAbsolute = getAbsolutePosition(play.endFieldPosition, drive.direction)
+                    let endSpotAbsolute = getAbsolutePosition(play.endFieldPosition, drive.direction)
 
                     let currentPlayYards = 0;
                     if (play.penaltyYards) {
+                        //console.log("play.penaltyYards", play.penaltyYards)
                         if (play.nullifyPlay) {
                             currentPlayYards += play.penaltyYards;
                         } else {
                             currentPlayYards += play.yardsGained + (play.penaltyYards ? play.penaltyYards : 0);
                         }
+
+                        endSpotAbsolute = calculateEndSpotAbsolute(endSpotAbsolute, currentPlayYards, drive.direction);
                     } else {
                         if (play.nullifyPlay) {
                             currentPlayYards += 0;
@@ -314,13 +317,11 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                     }
 
                     //drive marker calculations
+                    //console.log("play", play)
+                    //console.log("currentPlayYards", currentPlayYards)
 
-                    let driveMarkerX = startSpotAbsolute;
+                    let driveMarkerX = Math.min(startSpotAbsolute, endSpotAbsolute);
                     let driveMarkerWidth = Math.abs(currentPlayYards);
-
-                    if (startSpotAbsolute > endSpotAbsolute) {
-                        driveMarkerX = endSpotAbsolute;
-                    }
 
                     //console.log("   driveMarkerX", driveMarkerX)
                     //console.log("   driveMarkerWidth", driveMarkerWidth)
@@ -340,7 +341,7 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
 
                     let fillOpacity = 0.5;
                     if (currentPlayYards < 0 && playColor !== "yellow"){
-                        fillOpacity = 0.2;
+                        fillOpacity = 0.1;
                     }
 
                     let clickFill = "transparent";
@@ -350,21 +351,39 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                         clickFillOpacity = 0.9;
                     }
 
-                    const los = calculateEndSpotAbsolute(startSpotAbsolute, play.yardsToGo, drive.direction);
+                    const ltg = calculateEndSpotAbsolute(startSpotAbsolute, play.yardsToGo, drive.direction);
 
-                    /*console.log(`play: ${   play.playNumber}` +
-                    `   start: ${getFootballSpot(startSpotAbsolute, drive.direction)}` +
-                    `   end: ${getFootballSpot(endSpotAbsolute, drive.direction)}` +
+                    const ltg0 = Math.min(ltg, calculateEndSpotAbsolute(ltg, -10, drive.direction));
+                    console.log("ltg", ltg)
+                    console.log("ltg0", ltg0)
+
+                    /*console.log(`play: ${   index +1 }` +
+                    `   start: ${startSpotAbsolute}` +
+                    `   end: ${endSpotAbsolute}` +
                     `   yards: ${currentPlayYards}`)*/
 
 
                     return (
                         <Group left={0} top={index * playHeight} key={play.id}>
+
+                            <FieldGroup
+                                yScale={yScale}
+                                width={width-2}
+                                height={playHeight}
+                                totalLengthYards={totalLengthYards}
+                                totalWidthYards={totalWidthYards}
+                                endZoneColor={endZoneColor}
+                                lineColor={lineColor}
+                                simple={true}
+                            />
+
                             {/*<text x={0} y={10}>{play.id}</text>*/}
-                            <text x={0} y={15}>{play.description}</text>
+                            <text x={2} y={15}>{play.description}</text>
                             <rect x={0} y={2} width={width} height={playHeight -4} fill={driveColor} fillOpacity={0.1} />
+
                             {/*First down line*/}
-                            <line x1={xField(los)} y1={2} x2={xField(los)} y2={playHeight-4} stroke="yellow" strokeWidth="2" />
+                            <rect x={xField(ltg0)} y={2} width={xScale(10)} height={playHeight -4} fill="yellow" fillOpacity={0.1} />
+                            <line x1={xField(ltg)} y1={2} x2={xField(ltg)} y2={playHeight-4} stroke="yellow" strokeWidth="2" />
 
                             <PlayGraphic
                                 x={xField(driveMarkerX)}
@@ -375,9 +394,21 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                                 currentPlayYards={currentPlayYards}
                                 fill={playColor} fillOpacity={fillOpacity}
                             />
-                            <text x={xField(driveMarkerX + driveMarkerWidth) + 2} y={22}>{currentPlayYards}</text>
+
+                            <text
+                                x={drive.direction == 'left' ?
+                                    xField(driveMarkerX + driveMarkerWidth) + 3
+                                    :
+                                    xField(driveMarkerX ) - 14
+                                }
+                                y={22}
+                                fill={currentPlayYards < 0 ? "red" : "black"}
+                            >
+                                {currentPlayYards}
+                            </text>
+
                             {/* Transparent click handler*/}
-                            <rect x={0} y={2} width={width} height={playHeight -4}
+                            <rect x={0} y={1} width={width} height={playHeight -2}
                                   fill={clickFill}
                                   fillOpacity={clickFillOpacity}
                                   onClick={() => handleClick(play)}
@@ -387,10 +418,10 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                     )
                 })}
 
-
+                </Group>
             </svg>
         );
-    }, [drive.plays, filters]);
+    }, [width, drive.plays, filters]);
 
     return (
         <div>

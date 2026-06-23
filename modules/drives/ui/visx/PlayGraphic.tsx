@@ -17,9 +17,10 @@ interface PlayGraphicProps {
 export const PlayGraphic = ({ x, y, width, height, direction, currentPlayYards, fill, fillOpacity }: PlayGraphicProps) => {
 
     const arrowOffset = 5;
-    let strokeWidth = 0;
+    let strokeWidth = 1;
 
     let directionTrianglePoints = "";
+    //console.log("params", x, y, width, height, direction, currentPlayYards, fill, fillOpacity)
 
     if ((direction === "left" && currentPlayYards > 0) || (direction === "right" && currentPlayYards < 0)) {
         //left pointing arrow
