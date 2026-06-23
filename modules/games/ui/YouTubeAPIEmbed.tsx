@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { useGameVideo } from "./GameContext";
 import YouTube, { YouTubeProps } from 'react-youtube';
 import { AspectRatio, Box } from "@radix-ui/themes";
@@ -17,11 +17,14 @@ interface YouTubeAPIEmbedProps {
 
 export const YouTubeAPIEmbed = ({ videoId }: YouTubeAPIEmbedProps) => {
 
-    const { startTime, endTime, } = useGameVideo();
+    const { startTime, endTime, seekTriggerCount, } = useGameVideo();
 
     const playerRef = useRef<any>(null);
     const intervalRef = useRef<NodeJS.Timeout | number | null>(null);
     const timeRef = useRef({ start: startTime, end: endTime });
+
+    // Create a DOM reference to capture the video outer container element
+    const containerRef = useRef<HTMLDivElement | null>(null);
 
     // Sync the mutable ref values immediately whenever the context state shifts
     useEffect(() => {
@@ -33,7 +36,50 @@ export const YouTubeAPIEmbed = ({ videoId }: YouTubeAPIEmbedProps) => {
         if (playerRef.current) {
             playerRef.current.seekTo(startTime, true);
         }
-    }, [startTime]);
+    }, [seekTriggerCount]);
+
+    useEffect(() => {
+        const handleOrientationChange = async () => {
+            const orientation = window.screen.orientation?.type;
+            const targetElement = containerRef.current;
+
+            if (!targetElement) return;
+
+            // 1. If rotated to landscape, request full-screen view
+            if (orientation?.startsWith('landscape')) {
+                if (document.fullscreenElement === null) {
+                    try {
+                        await targetElement.requestFullscreen();
+                    } catch (err) {
+                        console.error("Full-screen request failed:", err);
+                    }
+                }
+            }
+            // 2. If rotated back to portrait, exit full-screen view
+            else if (orientation?.startsWith('portrait')) {
+                if (document.fullscreenElement !== null) {
+                    try {
+                        await document.exitFullscreen();
+                    } catch (err) {
+                        console.error("Exit full-screen failed:", err);
+                    }
+                }
+            }
+        };
+
+        // Attach listener if Screen Orientation API is available in browser
+        if (window.screen && window.screen.orientation) {
+            window.screen.orientation.addEventListener('change', handleOrientationChange);
+        }
+
+        // Clean up event listener when component unmounts
+        return () => {
+            if (window.screen && window.screen.orientation) {
+                window.screen.orientation.removeEventListener('change', handleOrientationChange);
+            }
+        };
+    }, []);
+
 
     const opts: YouTubeProps['opts'] = {
         height: '100%',
@@ -56,7 +102,6 @@ export const YouTubeAPIEmbed = ({ videoId }: YouTubeAPIEmbedProps) => {
         }
     };
 
-    //TODO Handle player pause state change correctly
     const onPlayerStateChange: YouTubeProps['onStateChange'] = (event) => {
         playerRef.current = event.target;
 
@@ -91,15 +136,13 @@ export const YouTubeAPIEmbed = ({ videoId }: YouTubeAPIEmbedProps) => {
     }
 
     useEffect(() => {
-        return () => {
-            if (intervalRef.current) clearInterval(intervalRef.current as number);
-        };
+        return () => stopTracking();
     }, []);
 
     return (
         <div>
             <div style={{ width: '100%' }}>
-            <Box className={"video-responsive-wrapper"}>
+            <Box ref={containerRef} className={"video-responsive-wrapper"}>
                 {/* The native component wrapper */}
                 <AspectRatio ratio={16 / 9}>
                     <YouTube

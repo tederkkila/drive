@@ -8,6 +8,8 @@ export type GameContextValue = {
     endTime: number;
     setStartTime: React.Dispatch<React.SetStateAction<number>>;
     setEndTime: React.Dispatch<React.SetStateAction<number>>;
+    triggerSeek: () => void;      // New action to force a jump
+    seekTriggerCount: number;     // Observable dependency item
 };
 
 export const GameContext = createContext<GameContextValue | null>(null);

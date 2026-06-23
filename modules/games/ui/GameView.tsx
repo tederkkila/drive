@@ -5,7 +5,6 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { Box } from "@radix-ui/themes";
 import { Drive } from "@/payload-types";
-//import { YouTubeEmbed } from "@/modules/games/ui/youTubeEmbed";
 import { YouTubeAPIEmbed } from "@/modules/games/ui/YouTubeAPIEmbed";
 import { DriveChart } from "@/modules/drives/ui/DriveChart"
 import { GameWithTeamsWithDrives } from "@/modules/games/games";
@@ -20,8 +19,13 @@ export const GameView = ({ gameId }: GameViewProps) => {
     const [videoId, setVideoId] = useState<string>("");
     const [startTime, setStartTime] = useState<number>(0);
     const [endTime, setEndTime] = useState<number>(3600);
+    const [seekTriggerCount, setSeekTriggerCount] = useState<number>(0);
 
-    const contextValues = {videoId, startTime, endTime, setStartTime, setEndTime}
+    const triggerSeek = () => {
+        setSeekTriggerCount(prev => prev + 1); // Incrementing always creates a new state change
+    };
+
+    const contextValues = {videoId, startTime, endTime, setStartTime, setEndTime, triggerSeek, seekTriggerCount}
 
     const trpc = useTRPC();
     const {data} = useSuspenseQuery(trpc.games.getGameWithDrives.queryOptions({ gameId: gameId }));
@@ -32,9 +36,9 @@ export const GameView = ({ gameId }: GameViewProps) => {
         setVideoId(game.videoId);
     }, [game.videoId])
 
-    useEffect(() => {
-        console.log("startTime", startTime);
-    }, [startTime])
+    // useEffect(() => {
+    //     console.log("startTime", startTime);
+    // }, [startTime])
 
     const drives: Drive[] = game.drives;
 

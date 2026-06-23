@@ -168,7 +168,7 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
                     />
 
                     <text
-                        x={xField(1)}
+                        x={xScale(1)}
                         y={yScale(11)}
                         fill={lineColor}
                         fillOpacity={0.85}
@@ -232,7 +232,7 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
         return xScale(x+10);
     }
 
-    const { setStartTime, setEndTime } = useGameVideo();
+    const { setStartTime, setEndTime, triggerSeek } = useGameVideo();
 
     const handleClick = (
         // event: React.MouseEvent<SVGRectElement, MouseEvent>,
@@ -242,6 +242,7 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
 
         setStartTime(play.youTubeStart);
         setEndTime(play.youTubeEnd);
+        triggerSeek();
     }
 
     const memoizedSvg = useMemo(() => {
@@ -354,8 +355,8 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                     const ltg = calculateEndSpotAbsolute(startSpotAbsolute, play.yardsToGo, drive.direction);
 
                     const ltg0 = Math.min(ltg, calculateEndSpotAbsolute(ltg, -10, drive.direction));
-                    console.log("ltg", ltg)
-                    console.log("ltg0", ltg0)
+                    //console.log("ltg", ltg)
+                    //console.log("ltg0", ltg0)
 
                     /*console.log(`play: ${   index +1 }` +
                     `   start: ${startSpotAbsolute}` +
