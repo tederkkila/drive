@@ -349,8 +349,9 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                     }
 
                     const ltg = calculateEndSpotAbsolute(startSpotAbsolute, play.yardsToGo, drive.direction);
+                    const maxLtg = Math.min(play.yardsToGo, 10)
+                    const ltg0 = Math.min(ltg, calculateEndSpotAbsolute(ltg, -maxLtg, drive.direction));
 
-                    const ltg0 = Math.min(ltg, calculateEndSpotAbsolute(ltg, -10, drive.direction));
                     //console.log("ltg", ltg)
                     //console.log("ltg0", ltg0)
 
@@ -379,7 +380,7 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                             <rect x={0} y={2} width={width} height={playHeight -4} fill={driveColor} fillOpacity={0.1} />
 
                             {/*First down line*/}
-                            <rect x={xField(ltg0)} y={2} width={xScale(10)} height={playHeight -4} fill="yellow" fillOpacity={0.1} />
+                            <rect x={xField(ltg0)} y={2} width={xScale(maxLtg)} height={playHeight -4} fill="yellow" fillOpacity={0.1} />
                             <line x1={xField(ltg)} y1={2} x2={xField(ltg)} y2={playHeight-4} stroke="yellow" strokeWidth="2" />
 
                             <PlayGraphic

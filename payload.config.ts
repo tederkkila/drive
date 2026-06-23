@@ -1,6 +1,8 @@
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
+import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
+import { Media } from './collections/Media' // Your media collection file
 import { buildConfig } from 'payload'
 import { multiTenantPlugin } from '@payloadcms/plugin-multi-tenant'
 import type { Config } from './payload-types'
@@ -75,5 +77,12 @@ export default buildConfig({
             },
             userHasAccessToAllTenants: (user) => isSuperAdmin(user),
         }),
+        vercelBlobStorage({
+            enabled: true,
+            collections: {
+                media: true,
+            },
+            token: process.env.BLOB_READ_WRITE_TOKEN || '',
+        })
     ],
 })
