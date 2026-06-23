@@ -19,7 +19,7 @@ export const GameList = ({ tenantSlug }: GameListProps) => {
         }
     ));
 
-    console.log("data", data)
+    //console.log("data", data)
 
     if (data.docs?.length === 0) {
         return (

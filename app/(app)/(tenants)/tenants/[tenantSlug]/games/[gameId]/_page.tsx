@@ -14,7 +14,7 @@ interface Props {
 const Page = async ({ params }: Props) => {
     const { tenantSlug, gameId } = await params;
 
-    console.log(`[gameId]page.tsx | game: ${gameId}`.toString());
+    //console.log(`[gameId]page.tsx | game: ${gameId}`.toString());
 
     prefetch(
         trpc.games.getOne.queryOptions({

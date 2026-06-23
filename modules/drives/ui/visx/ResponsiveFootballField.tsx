@@ -135,7 +135,7 @@ export default function FootballFieldContainer(): React.JSX.Element {
                     const boundedWidth = Math.min(width, 1024);
 
                     const calculatedHeight = width * (53.33 / 120);
-                    console.log(width, calculatedHeight, boundedWidth);
+                    //console.log(width, calculatedHeight, boundedWidth);
 
                     return (
                         <ResponsiveFootballField
