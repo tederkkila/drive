@@ -25,6 +25,7 @@
     "@trpc/server": "^11.17.0",
     "@trpc/tanstack-react-query": "^11.17.0",
     "@types/youtube": "^0.3.0",
+    "@vercel/analytics": "^2.0.1",
     "@visx/visx": "^4.0.0",
     "class-variance-authority": "^0.7.1",
     "client-only": "^0.0.1",

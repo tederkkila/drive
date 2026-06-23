@@ -1,6 +1,7 @@
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import type { Metadata } from "next";
 import { TRPCReactProvider } from "@/trpc/client";
+import { Analytics } from '@vercel/analytics/next';
 
 import { Theme, ThemePanel } from "@radix-ui/themes";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -38,6 +39,7 @@ export default function RootLayout({
           <Theme radius="medium">
             {children}
             {/*<ThemePanel />*/}
+            <Analytics />
           </Theme>
         </TRPCReactProvider>
       </NuqsAdapter>
