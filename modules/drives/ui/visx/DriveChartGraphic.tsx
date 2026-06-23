@@ -209,8 +209,6 @@ interface DriveChartGraphicProps {
 
 export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicProps) => {
 
-
-    //console.log("DriveChartGraphic", width)
     const [filters, setFilters] = useQueryStates(groupParsers);
 
     if (!drive.plays) return null;
@@ -238,8 +236,6 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
         // event: React.MouseEvent<SVGRectElement, MouseEvent>,
         play: Play
     ) => {
-        //console.log("handleClick", play)
-
         setStartTime(play.youTubeStart);
         setEndTime(play.youTubeEnd);
         triggerSeek();

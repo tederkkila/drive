@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/accordion"
 import { useGameVideo } from "@/modules/games/ui/GameContext";
 import { DriveChartGraphic, DriveChartTriggerGraphic } from "@/modules/drives/ui/visx/DriveChartGraphic";
-import { ParentSize, useParentSize } from "@visx/responsive";
+import { ParentSize, /*useParentSize*/ } from "@visx/responsive";
 
 
 
@@ -112,12 +112,12 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
 
 
 
-interface DriveRowProps {
+/*interface DriveRowProps {
     drive: Drive;
     key: React.Key;
-}
+}*/
 
-const DriveRow = ({ drive }: DriveRowProps) => {
+/*const DriveRow = ({ drive }: DriveRowProps) => {
     return (
         <div className="">
 
@@ -127,18 +127,19 @@ const DriveRow = ({ drive }: DriveRowProps) => {
 
         </div>
     )
-}
+}*/
 
-interface DrivePlay {
+/*interface DrivePlay {
     youTubeStart: number;
     youTubeEnd: number;
-}
+}*/
 
-interface DrivePlayProps {
+/*interface DrivePlayProps {
     play: DrivePlay;
     key: React.Key;
-}
+}*/
 
+/*
 const DrivePlay = ({ play }: DrivePlayProps) => {
     //console.log("play", play)
 
@@ -156,4 +157,4 @@ const DrivePlay = ({ play }: DrivePlayProps) => {
             <Button onClick={updateTime}>PLAY</Button>
         </div>
     )
-}
+}*/

@@ -1,7 +1,4 @@
-import { Drive } from "@/payload-types";
-import { Group } from "@visx/group";
 import React from "react";
-type Play = NonNullable<Drive["plays"]>[number];
 
 interface PlayGraphicProps {
     x: number;
@@ -45,7 +42,6 @@ export const PlayGraphic = ({ x, y, width, height, direction, currentPlayYards, 
         directionTrianglePoints += `${x+width} ${y},` //right top
     }
 
-    //console.log("directionTrianglePoints", directionTrianglePoints)
     return (
 
         <polygon
@@ -53,12 +49,6 @@ export const PlayGraphic = ({ x, y, width, height, direction, currentPlayYards, 
             fill={fill} fillOpacity={fillOpacity}
             stroke={fill} strokeWidth={strokeWidth}
         />
-        // <rect
-        //     x={xField(driveMarkerX)}
-        //     y={yScale(10)}
-        //     width={xScale(driveMarkerWidth)}
-        //     height={yScale(30)}
-        //     fill={playColor} fillOpacity={fillOpacity}
-        // />
+
     )
 }
