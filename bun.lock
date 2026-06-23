@@ -6,6 +6,7 @@
       "name": "drive",
       "dependencies": {
         "@base-ui/react": "^1.6.0",
+        "@img/sharp-linux-x64": "^0.35.2",
         "@payloadcms/db-mongodb": "^3.85.1",
         "@payloadcms/next": "^3.85.1",
         "@payloadcms/plugin-multi-tenant": "^3.85.1",
