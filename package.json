@@ -75,5 +75,7 @@
   "trustedDependencies": [
     "sharp",
     "unrs-resolver"
-  ]
+  ],
+  "os": ["linux", "current"],
+  "cpu": ["x64", "arm64", "current"]
 }
