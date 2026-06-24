@@ -422,12 +422,17 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
 
                             <text
                                 x={drive.direction == 'left' ?
-                                    xField(driveMarkerX + driveMarkerWidth) + 3
+                                    xField(driveMarkerX + driveMarkerWidth) + 4
                                     :
-                                    xField(driveMarkerX ) - 14
+                                    xField(driveMarkerX ) - 4
                                 }
-                                y={22}
+                                y={22.5}
                                 fill={currentPlayYards < 0 ? "red" : "black"}
+                                text-anchor={drive.direction == "left" ?
+                                    "start"
+                                    :
+                                    "end"
+                                }
                             >
                                 {currentPlayYards}
                             </text>
