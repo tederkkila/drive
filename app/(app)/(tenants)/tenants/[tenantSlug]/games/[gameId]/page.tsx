@@ -1,3 +1,4 @@
+import React, { Suspense } from "react";
 import { AppSidebar } from "@/modules/games/ui/app-sidebar-checkboxes"
 import {
     Breadcrumb,
@@ -14,7 +15,6 @@ import {
     SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { ErrorBoundary } from "react-error-boundary";
-import React, { Suspense } from "react";
 import { GameView } from "@/modules/games/ui/GameView";
 import { caller, HydrateClient, prefetch, trpc } from "@/trpc/server";
 
