@@ -417,6 +417,9 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                                 {currentPlayYards}
                             </text>
 
+                            {/*Down & Distance*/}
+                            <text x={xField(103)} y={25} fill="black" fontWeight="bold">{play.down} - {play.yardsToGo}</text>
+
                             {/* Transparent click handler*/}
                             <rect x={0} y={1} width={width} height={playHeight -2}
                                   fill={clickFill}
