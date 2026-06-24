@@ -246,6 +246,21 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
         triggerSeek();
     }
 
+    function getOrdinal(n: number): string {
+        const pr = new Intl.PluralRules('en-US', { type: 'ordinal' });
+        const rule = pr.select(n);
+
+        const suffixes: Record<string, string> = {
+            one: 'st',
+            two: 'nd',
+            few: 'rd',
+            other: 'th',
+        };
+
+        const suffix = suffixes[rule] || 'th';
+        return `${n}${suffix}`;
+    }
+
     const memoizedSvg = useMemo(() => {
 
         let playTotalYards = 0
@@ -418,7 +433,8 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                             </text>
 
                             {/*Down & Distance*/}
-                            <text x={xField(103)} y={25} fill="black" fontWeight="bold">{play.down} - {play.yardsToGo}</text>
+                            <text x={xField(103)} y={14} fill="black" fontWeight="bold">Play: {index + 1}</text>
+                            <text x={xField(102)} y={28} fill="black" fontWeight="bold">{getOrdinal(play.down)} & {play.yardsToGo}</text>
 
                             {/* Transparent click handler*/}
                             <rect x={0} y={1} width={width} height={playHeight -2}
