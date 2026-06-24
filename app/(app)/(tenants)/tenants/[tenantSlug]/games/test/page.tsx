@@ -1,4 +1,4 @@
-import { AppSidebar } from "@/modules/games/ui/app-sidebar"
+import { AppSidebar } from "@/modules/games/ui/app-sidebar-checkboxes"
 import {
     Breadcrumb,
     BreadcrumbItem,
