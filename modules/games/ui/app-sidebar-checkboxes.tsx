@@ -312,7 +312,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             variant="outline"
                             size="sm"
                             disabled={isClearDisabled}
-                            className="w-full justify-start gap-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive data-[disabled]:opacity-50 data-[disabled]:pointer-events-none"
+                            className="w-full justify-start gap-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive data-disabled:opacity-50 data-disabled:pointer-events-none"
                             onClick={handleClearAllGroups}
                         >
                             <Trash2 className="h-3.5 w-3.5" />
