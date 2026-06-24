@@ -6,6 +6,9 @@ import { ErrorBoundary } from 'react-error-boundary';
 import {Navbar, NavbarSkeleton} from "@/modules/tenants/ui/components/Navbar";
 import {Footer} from "@/modules/tenants/ui/components/Footer";
 
+import { generateTenantFaviconDomain } from "@/lib/utils";
+
+
 interface LayoutProps {
     children: React.ReactNode;
     params: Promise<{ tenantSlug: string }>;
@@ -19,7 +22,7 @@ export async function generateMetadata({ params }: Pick<LayoutProps, "params">):
 
     const faviconUrl =
         tenant.favicon && typeof tenant.favicon === "object" && tenant.favicon.url
-            ? `${process.env.NEXT_PUBLIC_APP_URL}${tenant.favicon.url}`
+            ? `${generateTenantFaviconDomain(tenantSlug)}${tenant.favicon.url}`
             : "/favicon.ico";
 
     return {

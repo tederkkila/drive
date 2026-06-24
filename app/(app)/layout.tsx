@@ -1,3 +1,4 @@
+import React from "react";
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import type { Metadata } from "next";
 import { TRPCReactProvider } from "@/trpc/client";

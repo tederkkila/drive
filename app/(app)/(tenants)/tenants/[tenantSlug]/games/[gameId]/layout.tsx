@@ -1,6 +1,7 @@
 import React from "react";
 import type { Metadata } from "next";
 import { caller } from "@/trpc/server";
+import { generateTenantFaviconDomain } from "@/lib/utils";
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -15,7 +16,7 @@ export async function generateMetadata({ params }: Pick<LayoutProps, "params">):
 
     const faviconUrl =
         tenant.favicon && typeof tenant.favicon === "object" && tenant.favicon.url
-            ? `${process.env.NEXT_PUBLIC_APP_URL}${tenant.favicon.url}`
+            ? `${generateTenantFaviconDomain(tenantSlug)}${tenant.favicon.url}`
             : "/favicon.ico";
 
     return {
