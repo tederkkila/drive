@@ -24,8 +24,12 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { useQueryStates, parseAsArrayOf, parseAsString, debounce } from "nuqs"
-import { Trash2 } from "lucide-react"
+import { Trash2, ChevronDown, ChevronUp } from "lucide-react"
 import { Label } from "@/components/ui/label";
+import { useGameVideo } from "@/modules/games/ui/GameContext";
+import { useParams } from "next/navigation";
+import { useTRPC } from "@/trpc/client";
+import { useQuery } from "@tanstack/react-query";
 
 // This is sample data.
 const data = {
@@ -194,6 +198,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     const [localSearch, setLocalSearch] = useState(groupStates.search);
 
+    const { expandedDriveIds, setExpandedDriveIds } = useGameVideo();
+    const params = useParams();
+    const gameId = params?.gameId as string;
+    const trpc = useTRPC();
+
+    const { data: gameData } = useQuery(
+        trpc.games.getGameWithDrives.queryOptions({ gameId }, { enabled: !!gameId })
+    );
+
+    const driveIds = gameData?.drives?.map(d => d.id) ?? [];
+    const allExpanded = driveIds.length > 0 && expandedDriveIds.length === driveIds.length;
+
+    const toggleAllDrives = () => {
+        if (allExpanded) {
+            setExpandedDriveIds([]);
+        } else {
+            setExpandedDriveIds(driveIds);
+        }
+    };
+
     // 1. Initialize the transition hook
     const [isPending, startTransition] = useTransition();
 
@@ -263,18 +287,40 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 />
 
                 <div className="px-4 py-2 border-b">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={isClearDisabled}
-                        className="w-full justify-start gap-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive data-[disabled]:opacity-50 data-[disabled]:pointer-events-none"
-                        onClick={handleClearAllGroups}
-                    >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        <span>
-                    Clear all filters {totalActiveFilters > 0 && `(${totalActiveFilters})`}
-                </span>
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full justify-start gap-2 text-xs"
+                            onClick={toggleAllDrives}
+                            disabled={driveIds.length === 0}
+                        >
+                            {allExpanded ? (
+                                <>
+                                    <ChevronUp className="h-3.5 w-3.5" />
+                                    <span>Close all drives</span>
+                                </>
+                            ) : (
+                                <>
+                                    <ChevronDown className="h-3.5 w-3.5" />
+                                    <span>Open all drives</span>
+                                </>
+                            )}
+                        </Button>
+
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={isClearDisabled}
+                            className="w-full justify-start gap-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive data-disabled:opacity-50 data-disabled:pointer-events-none"
+                            onClick={handleClearAllGroups}
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span>
+                                Clear all filters {totalActiveFilters > 0 && `(${totalActiveFilters})`}
+                            </span>
+                        </Button>
+                    </div>
                 </div>
 
                 {/*<SearchForm />*/}

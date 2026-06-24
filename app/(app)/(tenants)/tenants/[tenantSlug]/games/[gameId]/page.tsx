@@ -17,6 +17,7 @@ import {
 import { ErrorBoundary } from "react-error-boundary";
 import { GameView } from "@/modules/games/ui/GameView";
 import { caller, HydrateClient, prefetch, trpc } from "@/trpc/server";
+import { GameProvider } from "@/modules/games/ui/GameContext";
 
 interface Props {
     params: Promise<{
@@ -39,41 +40,43 @@ const Page = async ({ params }: Props) => {
     );
 
     return (
-        <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset className="h-screen w-full flex flex-col overflow-hidden">
-                <header className="sticky top-0 flex h-8 shrink-0 items-center gap-2 border-b bg-background px-4">
-                    <SidebarTrigger className="-ml-1" />
-                    <Separator orientation="vertical" className="mr-2 h-4" />
-                    <Breadcrumb>
-                        <BreadcrumbList>
-                            <BreadcrumbItem className="hidden md:block">
-                                <BreadcrumbLink href="/">{tenantSlug}</BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator className="hidden md:block" />
-                            <BreadcrumbItem>
-                                <BreadcrumbPage>Games</BreadcrumbPage>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator className="hidden md:block" />
-                            <BreadcrumbItem>
-                                <BreadcrumbPage>{game.name}</BreadcrumbPage>
-                            </BreadcrumbItem>
+        <GameProvider>
+            <SidebarProvider>
+                <AppSidebar />
+                <SidebarInset className="h-screen w-full flex flex-col overflow-hidden">
+                    <header className="sticky top-0 flex h-8 shrink-0 items-center gap-2 border-b bg-background px-4">
+                        <SidebarTrigger className="-ml-1" />
+                        <Separator orientation="vertical" className="mr-2 h-4" />
+                        <Breadcrumb>
+                            <BreadcrumbList>
+                                <BreadcrumbItem className="hidden md:block">
+                                    <BreadcrumbLink href="/">{tenantSlug}</BreadcrumbLink>
+                                </BreadcrumbItem>
+                                <BreadcrumbSeparator className="hidden md:block" />
+                                <BreadcrumbItem>
+                                    <BreadcrumbPage>Games</BreadcrumbPage>
+                                </BreadcrumbItem>
+                                <BreadcrumbSeparator className="hidden md:block" />
+                                <BreadcrumbItem>
+                                    <BreadcrumbPage>{game.name}</BreadcrumbPage>
+                                </BreadcrumbItem>
 
-                        </BreadcrumbList>
-                    </Breadcrumb>
-                </header>
-                <div className="flex-1 flex flex-col overflow-hidden bg-gray-100">
+                            </BreadcrumbList>
+                        </Breadcrumb>
+                    </header>
+                    <div className="flex-1 flex flex-col overflow-hidden bg-gray-100">
 
-                    <HydrateClient>
-                        <ErrorBoundary fallback={<div>Something went wrong</div>}>
-                            <Suspense fallback={<div>GameView Loading...</div>}>
-                                <GameView gameId={ gameId } />
-                            </Suspense>
-                        </ErrorBoundary>
-                    </HydrateClient>
-                </div>
-            </SidebarInset>
-        </SidebarProvider>
+                        <HydrateClient>
+                            <ErrorBoundary fallback={<div>Something went wrong</div>}>
+                                <Suspense fallback={<div>GameView Loading...</div>}>
+                                    <GameView gameId={ gameId } />
+                                </Suspense>
+                            </ErrorBoundary>
+                        </HydrateClient>
+                    </div>
+                </SidebarInset>
+            </SidebarProvider>
+        </GameProvider>
     )
 }
 

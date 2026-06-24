@@ -10,6 +10,7 @@ import {
 // import { useGameVideo } from "@/modules/games/ui/GameContext";
 import { DriveChartGraphic, DriveChartTriggerGraphic } from "@/modules/drives/ui/visx/DriveChartGraphic";
 import { ParentSize, /*useParentSize*/ } from "@visx/responsive";
+import { useGameVideo } from "@/modules/games/ui/GameContext";
 
 
 
@@ -39,6 +40,7 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
     )
 
     const validDrives = drives.filter(hasPopulatedPossessingTeam);
+    const { expandedDriveIds, setExpandedDriveIds } = useGameVideo();
     //const { parentRef, width, height } = useParentSize({ debounceTime: 150 });
 
     // console.log("parentRef", parentRef)
@@ -52,6 +54,8 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
                 // collapsible
                 // defaultValue="shipping"
                 className="w-full space-y-1"
+                value={expandedDriveIds}
+                onValueChange={setExpandedDriveIds}
             >
                 {validDrives.map((drive) => (
                     <AccordionItem value={drive.id} key={drive.id} className="bg-transparent overflow-hidden">
