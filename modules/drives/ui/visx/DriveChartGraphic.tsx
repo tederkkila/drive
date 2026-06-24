@@ -428,7 +428,7 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                                 }
                                 y={22.5}
                                 fill={currentPlayYards < 0 ? "red" : "black"}
-                                text-anchor={drive.direction == "left" ?
+                                textAnchor={drive.direction == "left" ?
                                     "start"
                                     :
                                     "end"
@@ -438,8 +438,8 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                             </text>
 
                             {/*Down & Distance*/}
-                            <text x={xField(109)} y={15} fill="black" text-anchor="end">Play: {index + 1}</text>
-                            <text x={xField(109)} y={30} fill="black" text-anchor="end">{getOrdinal(play.down)} & {play.yardsToGo}</text>
+                            <text x={xField(109)} y={15} fill="black" textAnchor="end">Play: {index + 1}</text>
+                            <text x={xField(109)} y={30} fill="black" textAnchor="end">{getOrdinal(play.down)} & {play.yardsToGo}</text>
 
                             {/* Transparent click handler*/}
                             <rect x={0} y={1} width={width} height={playHeight -2}
