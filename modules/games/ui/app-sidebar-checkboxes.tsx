@@ -3,7 +3,6 @@
 import React, {useState, useEffect, useTransition} from "react"
 import { ChevronRight, Search } from "lucide-react"
 
-//import { SearchForm } from "@/modules/games/ui/search-form"
 import { VersionSwitcher } from "@/modules/games/ui/version-switcher"
 import {
     Collapsible,
