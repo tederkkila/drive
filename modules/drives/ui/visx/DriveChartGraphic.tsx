@@ -246,6 +246,21 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
         triggerSeek();
     }
 
+    function getOrdinal(n: number): string {
+        const pr = new Intl.PluralRules('en-US', { type: 'ordinal' });
+        const rule = pr.select(n);
+
+        const suffixes: Record<string, string> = {
+            one: 'st',
+            two: 'nd',
+            few: 'rd',
+            other: 'th',
+        };
+
+        const suffix = suffixes[rule] || 'th';
+        return `${n}${suffix}`;
+    }
+
     const memoizedSvg = useMemo(() => {
 
         let playTotalYards = 0
@@ -407,15 +422,24 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
 
                             <text
                                 x={drive.direction == 'left' ?
-                                    xField(driveMarkerX + driveMarkerWidth) + 3
+                                    xField(driveMarkerX + driveMarkerWidth) + 4
                                     :
-                                    xField(driveMarkerX ) - 14
+                                    xField(driveMarkerX ) - 4
                                 }
-                                y={22}
+                                y={22.5}
                                 fill={currentPlayYards < 0 ? "red" : "black"}
+                                textAnchor={drive.direction == "left" ?
+                                    "start"
+                                    :
+                                    "end"
+                                }
                             >
                                 {currentPlayYards}
                             </text>
+
+                            {/*Down & Distance*/}
+                            <text x={xField(109)} y={15} fill="black" textAnchor="end">Play: {index + 1}</text>
+                            <text x={xField(109)} y={30} fill="black" textAnchor="end">{getOrdinal(play.down)} & {play.yardsToGo}</text>
 
                             {/* Transparent click handler*/}
                             <rect x={0} y={1} width={width} height={playHeight -2}
