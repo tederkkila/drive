@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react"
-import { ChevronRight } from "lucide-react"
+import React, {useState, useEffect, useTransition} from "react"
+import { ChevronRight, Search } from "lucide-react"
 
-import { SearchForm } from "@/modules/games/ui/search-form"
+//import { SearchForm } from "@/modules/games/ui/search-form"
 import { VersionSwitcher } from "@/modules/games/ui/version-switcher"
 import {
     Collapsible,
@@ -16,7 +16,7 @@ import {
     SidebarGroup,
     SidebarGroupContent,
     SidebarGroupLabel,
-    SidebarHeader,
+    SidebarHeader, SidebarInput,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
@@ -24,8 +24,9 @@ import {
 } from "@/components/ui/sidebar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
-import { useQueryStates, parseAsArrayOf, parseAsString } from "nuqs"
+import { useQueryStates, parseAsArrayOf, parseAsString, debounce } from "nuqs"
 import { Trash2 } from "lucide-react"
+import { Label } from "@/components/ui/label";
 
 // This is sample data.
 const data = {
@@ -175,6 +176,13 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     const groupParsers = {
+        search: parseAsString
+            .withOptions({
+                // clearOnDefault: true,
+                limitUrlUpdates: debounce(500),
+                shallow: false,
+            })
+            .withDefault(""),
         playType: parseAsArrayOf(parseAsString).withDefault([]),
         down: parseAsArrayOf(parseAsString).withDefault([]),
         distance: parseAsArrayOf(parseAsString).withDefault([]),
@@ -185,10 +193,38 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     const [groupStates, setGroupStates] = useQueryStates(groupParsers)
 
-    const totalActiveFilters = Object.values(groupStates).reduce(
-        (acc, currentArray) => acc + (currentArray?.length ?? 0),
+    const [localSearch, setLocalSearch] = useState(groupStates.search);
+
+    // 1. Initialize the transition hook
+    const [isPending, startTransition] = useTransition();
+
+    useEffect(() => {
+        setLocalSearch(groupStates.search);
+    }, [groupStates.search]);
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        // 2. Instant high-priority UI paint
+        setLocalSearch(value);
+
+        // 3. Batch URL/Query computation as a low-priority transition
+        startTransition(() => {
+            setGroupStates({ search: value });
+        });
+    };
+
+    const totalActiveFilters = Object.entries(groupStates).reduce(
+        (acc, [key, value]) => {
+            // 1. If it's your search string, count it as exactly 1 if it has text inside
+            if (key === 'search') {
+                return acc + (typeof value === 'string' && value.trim() !== '' ? 1 : 0);
+            }
+
+            // 2. Otherwise, treat it as your checkbox arrays and count the selected items
+            return acc + (Array.isArray(value) ? value.length : 0);
+        },
         0
-    )
+    );
 
     const isClearDisabled = totalActiveFilters === 0
 
@@ -242,7 +278,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     </Button>
                 </div>
 
-                <SearchForm />
+                {/*<SearchForm />*/}
+                <SidebarGroup className="py-0">
+                    <SidebarGroupContent className="relative">
+                        <Label htmlFor="search" className="sr-only">
+                            Search
+                        </Label>
+                        <SidebarInput
+                            id="search"
+                            type="text"
+                            placeholder="Search by term..."
+                            value={localSearch}
+                            onChange={handleSearchChange}
+                            className="pl-8"
+                        />
+                        <Search className="pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 opacity-50 select-none" />
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
 
             </SidebarHeader>
             <SidebarContent className="gap-0">

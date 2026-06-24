@@ -19,6 +19,11 @@ const poppins = Poppins({
 import { useQueryStates, parseAsArrayOf, parseAsString } from 'nuqs';
 
 const groupParsers = {
+    search: parseAsString
+        .withOptions({
+            clearOnDefault: true,
+        })
+        .withDefault(""),
     playType: parseAsArrayOf(parseAsString).withDefault([]),
     down: parseAsArrayOf(parseAsString).withDefault([]),
     distance: parseAsArrayOf(parseAsString).withDefault([]),
@@ -288,7 +293,14 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                         })
                     }
 
-                    if (downFiltered || playTypeFiltered || distanceFiltered) {
+                    let searchFiltered = false;
+                    if (filters.search.length > 0) {
+                        if (!play.description.toLowerCase().includes(filters.search.toLowerCase())) {
+                            searchFiltered = true;
+                        }
+                    }
+
+                    if (downFiltered || playTypeFiltered || distanceFiltered || searchFiltered) {
                         filtered = true;
                     }
 
