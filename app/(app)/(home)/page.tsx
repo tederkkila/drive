@@ -1,5 +1,4 @@
 import React from "react";
-import Image from "next/image";
 import PayloadImage from "@/modules/media/QuickMedia"
 
 export default function Home() {
