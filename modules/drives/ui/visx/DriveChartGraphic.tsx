@@ -433,8 +433,8 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                             </text>
 
                             {/*Down & Distance*/}
-                            <text x={xField(103)} y={14} fill="black">Play: {index + 1}</text>
-                            <text x={xField(102)} y={28} fill="black">{getOrdinal(play.down)} & {play.yardsToGo}</text>
+                            <text x={xField(109)} y={15} fill="black" text-anchor="end">Play: {index + 1}</text>
+                            <text x={xField(109)} y={30} fill="black" text-anchor="end">{getOrdinal(play.down)} & {play.yardsToGo}</text>
 
                             {/* Transparent click handler*/}
                             <rect x={0} y={1} width={width} height={playHeight -2}
