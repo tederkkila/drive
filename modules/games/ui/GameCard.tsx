@@ -27,7 +27,7 @@ export const GameCard = ({ game }: GameCardProps) => {
                     {gameDate}
                 </CardDescription>
                 <CardAction>
-                    <Button variant="link" >
+                    <Button variant="outline" >
                         <Link href={`/games/${game.id}`}>View</Link>
                     </Button>
                 </CardAction>
