@@ -239,6 +239,7 @@ export interface Team {
 export interface Game {
   id: string;
   tenant?: (string | null) | Tenant;
+  tenants: (string | Tenant)[];
   name: string;
   slug: string;
   date: string;
@@ -268,7 +269,7 @@ export interface Drive {
     | null;
   plays?:
     | {
-        playNumber: number;
+        playNumber?: number | null;
         quarter: number;
         down: number;
         yardsToGo: number;
@@ -483,6 +484,7 @@ export interface TeamsSelect<T extends boolean = true> {
  */
 export interface GamesSelect<T extends boolean = true> {
   tenant?: T;
+  tenants?: T;
   name?: T;
   slug?: T;
   date?: T;
