@@ -345,9 +345,6 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                     `   end: ${endSpotAbsolute}` +
                     `   yards: ${currentPlayYards}`)*/
 
-                    const footballX = xField(Math.max(startSpotAbsolute, endSpotAbsolute))
-                    const footballY = yScale(10)
-
                     /* Start Filters*/
                     let filtered = false;
 
