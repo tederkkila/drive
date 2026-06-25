@@ -10,6 +10,13 @@ export const Games: CollectionConfig = {
     },
     fields: [
         {
+            name: 'tenants', // Use plural to prevent any future system naming collisions
+            type: 'relationship',
+            relationTo: 'tenants',
+            hasMany: true,  // Correctly accepts an array of tenant IDs
+            required: true,
+        },
+        {
             name: "name",
             type: "text",
             required: true,

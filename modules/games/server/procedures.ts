@@ -112,8 +112,8 @@ export const gamesRouter = createTRPCRouter({
                 collection: "games",
                 depth: 2,
                 where: {
-                    "tenant.slug": {
-                        equals: input.tenantSlug,
+                    "tenants.slug": {
+                        in: input.tenantSlug,
                     },
                 },
                 limit: input.limit ?? 10,

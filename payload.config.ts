@@ -55,7 +55,9 @@ export default buildConfig({
         multiTenantPlugin<Config>({
             collections: {
                 teams: {},
-                games: {},
+                games: {
+                    useTenantAccess: false,
+                },
                 drives: {},
                 plays: {},
                 media: {},
