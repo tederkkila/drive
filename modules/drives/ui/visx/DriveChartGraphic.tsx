@@ -214,7 +214,7 @@ interface DriveChartGraphicProps {
 
 export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicProps) => {
 
-    const [filters, setFilters] = useQueryStates(groupParsers);
+    const [filters, _setFilters] = useQueryStates(groupParsers);
 
     if (!drive.plays) return null;
     if (width === 0) return null;
