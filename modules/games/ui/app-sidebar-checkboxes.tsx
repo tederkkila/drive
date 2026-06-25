@@ -33,7 +33,7 @@ import { useQuery } from "@tanstack/react-query";
 
 // This is sample data.
 const data = {
-    versions: ["NZL U18", "AUS U18"],
+    versions: ["NZL U18"/*, "AUS U18"*/],
     navMain: [
         // {
         //     title: "Drive Number",
@@ -103,7 +103,7 @@ const data = {
                     id: "3",
                 },
                 {
-                    title: "3-6 yards",
+                    title: "4-6 yards",
                     id: "6",
                 },
                 {
@@ -117,32 +117,50 @@ const data = {
             ],
         },
         {
-            title: "Gain",
+            title: "Hash",
+            group: "hash",
+            items: [
+                {
+                    title: "Left Hash",
+                    id: "left",
+                },
+                {
+                    title: "Middle of Field",
+                    id: "middle",
+                },
+                {
+                    title: "Right Hash",
+                    id: "right",
+                },
+            ],
+        },
+        {
+            title: "Gain (yards)",
             group: "gain",
             items: [
                 {
-                    title: "<0",
-                    id: "#",
+                    title: "Loss (<0) ",
+                    id: "loss",
                 },
                 {
-                    title: "0",
-                    id: "#",
+                    title: "No Gain (0)",
+                    id: "no",
                 },
                 {
-                    title: "1-5",
-                    id: "#",
+                    title: "Short (1-4)",
+                    id: "short",
                 },
                 {
-                    title: "5-10",
-                    id: "#",
+                    title: "Medium (5-8)",
+                    id: "medium",
                 },
                 {
-                    title: "10+",
-                    id: "#",
+                    title: "Long (9+)",
+                    id: "long",
                 },
                 {
-                    title: "20+",
-                    id: "#",
+                    title: "Explosive (15+)",
+                    id: "explosive",
                 },
             ],
         },
@@ -151,23 +169,23 @@ const data = {
             group: "fieldPosition",
             items: [
                 {
-                    title: "-1 to -20",
+                    title: "Backed-Up (-1 to -20)",
                     id: "backedUp",
                 },
                 {
-                    title: "-20 to 40",
+                    title: "Midfield (-20 to 40)",
                     id: "midfield",
                 },
                 {
-                    title: "40-20",
+                    title: "Green Zone (40-20)",
                     id: "greenZone",
                 },
                 {
-                    title: "20-5",
+                    title: "Red Zone (20-5)",
                     id: "redZone",
                 },
                 {
-                    title: "5-0",
+                    title: "Goal Line (5-0)",
                     id: "goalLine",
                 },
             ],
@@ -189,6 +207,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         playType: parseAsArrayOf(parseAsString).withDefault([]),
         down: parseAsArrayOf(parseAsString).withDefault([]),
         distance: parseAsArrayOf(parseAsString).withDefault([]),
+        hash: parseAsArrayOf(parseAsString).withDefault([]),
         gain: parseAsArrayOf(parseAsString).withDefault([]),
         fieldPosition: parseAsArrayOf(parseAsString).withDefault([]),
         // Easily add more groups here...

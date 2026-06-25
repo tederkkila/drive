@@ -27,6 +27,7 @@ const groupParsers = {
     playType: parseAsArrayOf(parseAsString).withDefault([]),
     down: parseAsArrayOf(parseAsString).withDefault([]),
     distance: parseAsArrayOf(parseAsString).withDefault([]),
+    hash: parseAsArrayOf(parseAsString).withDefault([]),
     gain: parseAsArrayOf(parseAsString).withDefault([]),
     fieldPosition: parseAsArrayOf(parseAsString).withDefault([]),
 };
@@ -261,6 +262,9 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
         return `${n}${suffix}`;
     }
 
+
+
+
     const memoizedSvg = useMemo(() => {
 
         let playTotalYards = 0
@@ -275,49 +279,6 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
 
 
                 {drive.plays.map((play, index) => {
-
-                    let filtered = false;
-
-                    let downFiltered = (filters.down.length > 0 && !filters.down.includes(String(play.down)));
-
-                    let playTypeFiltered = (filters.playType.length > 0 && !filters.playType.includes(String(play.playType)));
-                    if (playTypeFiltered && filters.playType.includes(String('penalty'))) {
-
-                        if (play.penaltyYards) {
-                            playTypeFiltered = false;
-                        }
-
-                    }
-
-                    let distanceFiltered =  false
-                    if (filters.distance.length > 0) {
-                        distanceFiltered = true;
-                        filters.distance.forEach((distance) => {
-                            if (distance == 'long' && play.yardsToGo > 10) {
-                                distanceFiltered = false;
-                            } else if (distance.includes("10") && 7 <= play.yardsToGo && play.yardsToGo < 10) {
-                                distanceFiltered = false;
-
-                            } else if (distance.includes("6") && 3 <= play.yardsToGo && play.yardsToGo < 6) {
-                                distanceFiltered = false;
-
-                            } else if (distance.includes("3") && 0 <= play.yardsToGo && play.yardsToGo < 3) {
-                                distanceFiltered = false;
-                            }
-
-                        })
-                    }
-
-                    let searchFiltered = false;
-                    if (filters.search.length > 0) {
-                        if (!play.description.toLowerCase().includes(filters.search.toLowerCase())) {
-                            searchFiltered = true;
-                        }
-                    }
-
-                    if (downFiltered || playTypeFiltered || distanceFiltered || searchFiltered) {
-                        filtered = true;
-                    }
 
                     const startSpotAbsolute = getAbsolutePosition(play.startFieldPosition, drive.direction)
                     let endSpotAbsolute = getAbsolutePosition(play.endFieldPosition, drive.direction)
@@ -370,10 +331,7 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
 
                     let clickFill = "transparent";
                     let clickFillOpacity = 0.0;
-                    if (filtered) {
-                        clickFill = fieldColor;
-                        clickFillOpacity = 0.9;
-                    }
+
 
                     const ltg = calculateEndSpotAbsolute(startSpotAbsolute, play.yardsToGo, drive.direction);
                     const maxLtg = Math.min(play.yardsToGo, 10)
@@ -386,6 +344,113 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                     `   start: ${startSpotAbsolute}` +
                     `   end: ${endSpotAbsolute}` +
                     `   yards: ${currentPlayYards}`)*/
+
+                    const footballX = xField(Math.max(startSpotAbsolute, endSpotAbsolute))
+                    const footballY = yScale(10)
+
+                    /* Start Filters*/
+                    let filtered = false;
+
+                    let searchFiltered = false;
+                    if (filters.search.length > 0) {
+                        if (!play.description.toLowerCase().includes(filters.search.toLowerCase())) {
+                            searchFiltered = true;
+                        }
+                    }
+
+                    let downFiltered = (filters.down.length > 0 && !filters.down.includes(String(play.down)));
+
+                    let playTypeFiltered = (filters.playType.length > 0 && !filters.playType.includes(String(play.playType)));
+                    if (playTypeFiltered && filters.playType.includes(String('penalty'))) {
+
+                        if (play.penaltyYards) {
+                            playTypeFiltered = false;
+                        }
+
+                    }
+
+                    let distanceFiltered =  false
+                    if (filters.distance.length > 0) {
+                        distanceFiltered = true;
+                        filters.distance.forEach((distance) => {
+                            if (distance == 'long' && play.yardsToGo > 10) {
+                                distanceFiltered = false;
+                            } else if (distance.includes("10") && 7 <= play.yardsToGo && play.yardsToGo <= 10) {
+                                distanceFiltered = false;
+
+                            } else if (distance.includes("6") && 4 <= play.yardsToGo && play.yardsToGo <= 6) {
+                                distanceFiltered = false;
+
+                            } else if (distance.includes("3") && 0 <= play.yardsToGo && play.yardsToGo <= 3) {
+                                distanceFiltered = false;
+                            }
+
+                        })
+                    }
+
+                    let hashFiltered = (filters.hash.length > 0 && !filters.hash.includes(String(play.hash)));
+
+                    let gainFiltered = false
+                    if (filters.gain.length > 0) {
+                        gainFiltered = true;
+                        filters.gain.forEach((gain) => {
+                            if (gain === 'explosive' && 15 <= currentPlayYards ) {
+                                gainFiltered = false;
+                            } else if (gain === 'long' && 9 <= currentPlayYards && currentPlayYards <= 14) {
+                                gainFiltered = false;
+                            } else if (gain === 'medium' && 5 <= currentPlayYards && currentPlayYards <= 8) {
+                                gainFiltered = false;
+                            } else if (gain === 'short' && 1 <= currentPlayYards && currentPlayYards <= 4) {
+                                gainFiltered = false;
+                            } else if (gain === 'no' && currentPlayYards == 0) {
+                                gainFiltered = false;
+                            } else if (gain === 'loss' && currentPlayYards < 0) {
+                                gainFiltered = false;
+                            }
+
+                        })
+                    }
+
+                    let fieldPositionFiltered = false
+                    if (filters.fieldPosition.length > 0) {
+                        fieldPositionFiltered = true;
+                        filters.fieldPosition.forEach((fieldPosition) => {
+                            if (fieldPosition === 'goalLine' && 1 <= play.startFieldPosition && play.startFieldPosition <= 5) {
+                                fieldPositionFiltered = false;
+                            } else if (fieldPosition === 'redZone' && 5 < play.startFieldPosition && play.startFieldPosition <= 20) {
+                                fieldPositionFiltered = false;
+                            } else if (fieldPosition === 'greenZone' && 20 < play.startFieldPosition && play.startFieldPosition <= 40) {
+                                fieldPositionFiltered = false;
+                            } else if (fieldPosition === 'midfield' && 40 < play.startFieldPosition && play.startFieldPosition <= 50) {
+                                fieldPositionFiltered = false;
+                            } else if (fieldPosition === 'midfield' && -49 < play.startFieldPosition && play.startFieldPosition <= -20) {
+                                fieldPositionFiltered = false;
+                            } else if (fieldPosition === 'backedUp' && -20 < play.startFieldPosition && play.startFieldPosition <= -1) {
+                                fieldPositionFiltered = false;
+                            }
+
+                        })
+                    }
+
+
+
+                    if (
+                        searchFiltered ||
+                        downFiltered ||
+                        playTypeFiltered ||
+                        distanceFiltered ||
+                        hashFiltered ||
+                        gainFiltered ||
+                        fieldPositionFiltered
+                    ) {
+                        filtered = true;
+                    }
+
+                    if (filtered) {
+                        clickFill = fieldColor;
+                        clickFillOpacity = 0.9;
+                    }
+                    /* End Filters*/
 
 
                     return (
@@ -416,8 +481,10 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                                 width={xScale(driveMarkerWidth)}
                                 height={yScale(30)}
                                 direction={drive.direction}
+                                hash={play.hash}
                                 currentPlayYards={currentPlayYards}
                                 fill={playColor} fillOpacity={fillOpacity}
+                                showBall
                             />
 
                             <text
