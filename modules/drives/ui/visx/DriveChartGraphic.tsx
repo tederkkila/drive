@@ -32,9 +32,7 @@ const groupParsers = {
     fieldPosition: parseAsArrayOf(parseAsString).withDefault([]),
 };
 
-// const fieldColor = "#ccd5cc";
 const fieldColor = "#e9e9e9";
-// const endZoneColor = "#a8b0a7";
 const endZoneColor = "#adadad";
 const lineColor = "#555555";
 const driveColor = "#555555";
@@ -50,7 +48,6 @@ interface DriveChartTriggerGraphicProps {
 
 export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTriggerGraphicProps) => {
 
-    //console.log("DriveChartTriggerGraphic", width)
     let currentDriveColor = driveColor;
 
     let runCount = 0;
@@ -101,6 +98,7 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
 
     const totalYards = runYards + passYards + penaltyYards;
 
+
     const startSpotAbsolute = getAbsolutePosition(drive.startFieldPosition, drive.direction);
 
     // console.log("Test startFieldPosition -45 Left", getAbsolutePosition(-45, "left"))
@@ -122,19 +120,72 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
     }
 
     //drive marker calculations
-    const endSpotAbsolute = calculateEndSpotAbsolute(startSpotAbsolute, totalYards, drive.direction);
+
+    let finalSpot: number;
+
+    const lastValidPlay: Play = drive.plays.reduceRight((acc, play) => {
+        if (!acc && play.playType !== 'extra_point') {
+            return play;
+        }
+        return acc;
+    }, null);
+
+    //console.log("lastValidPlay", lastValidPlay)
+
+    //if final play is a penalty
+    if (lastValidPlay.nullifyPlay) {
+        //only use penalty yards
+        finalSpot = lastValidPlay.startFieldPosition;
+        finalSpot = lastValidPlay.penaltyYards ? lastValidPlay.penaltyYards : 0;
+
+    } else {
+        finalSpot = lastValidPlay.endFieldPosition;
+        finalSpot += lastValidPlay.penaltyYards ? lastValidPlay.penaltyYards : 0;
+    }
+
+    const endSpotAbsolute = getAbsolutePosition(finalSpot, drive.direction);
+    // const endSpotAbsolute = calculateEndSpotAbsolute(startSpotAbsolute, totalYards, drive.direction);
+
+
+    //check if the drive LOST yardage
+    let driveGain = 0;
+    if (drive.direction === "left") {
+        driveGain = startSpotAbsolute - endSpotAbsolute;
+    } else if (drive.direction === "right") {
+        driveGain = endSpotAbsolute - startSpotAbsolute;
+    }
+
+    //console.log("driveGain", startSpotAbsolute, endSpotAbsolute, driveGain)
 
     let driveMarkerX = startSpotAbsolute;
-    let driveMarkerWidth = Math.abs(totalYards);
+    let driveMarkerWidth = Math.abs(driveGain);
 
     if (startSpotAbsolute > endSpotAbsolute) {
         driveMarkerX = endSpotAbsolute;
     }
 
+    let resultText = "";
     if (drive.result === "touchdown") {
         currentDriveColor = 'green';
+        resultText = "TD";
     } else if (drive.result === "field_goal") {
         currentDriveColor = 'yellow';
+        resultText = "FG";
+    } else if (drive.result === "interception") {
+        currentDriveColor = 'red';
+        resultText = "INT";
+    } else if (drive.result === "fumble_lost") {
+        currentDriveColor = 'red';
+        resultText = "FUMBLE";
+    } else if (drive.result === "turnover_on_downs") {
+        //currentDriveColor = 'red';
+        resultText = "ToD";
+    } else if (drive.result === "punt") {
+        //currentDriveColor = 'red';
+        resultText = "PUNT";
+    } else if (drive.result === "end_of_period") {
+        //currentDriveColor = 'red';
+        resultText = "END";
     }
 
     const memoizedSvg = useMemo(() => {
@@ -169,9 +220,44 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
                         y={yScale(20)}
                         width={xScale(driveMarkerWidth)}
                         height={yScale(30)}
-                        // stroke="#555555" strokeWidth={1}
-                        fill={currentDriveColor} fillOpacity={0.5}
+                        stroke="#555555" strokeWidth={1} strokeOpacity={driveGain > 0 ? 0 : 0.5}
+                        fill={currentDriveColor} fillOpacity={driveGain > 0 ? 0.5 : 0.2}
                     />
+
+                    <text
+                        x={drive.direction == 'left' ?
+                            xField(driveMarkerX + driveMarkerWidth) + 4
+                            :
+                            xField(driveMarkerX ) - 4
+                        }
+                        y={49}
+                        fill={driveGain < 0 ? "red" : "black"}
+                        textAnchor={drive.direction == "left" ?
+                            "start"
+                            :
+                            "end"
+                        }
+                    >
+                        {driveGain}
+                    </text>
+
+                    <text
+                        x={drive.direction == 'left' ?
+                            xField(driveMarkerX ) - 13
+                            :
+                            xField(driveMarkerX + driveMarkerWidth) + 13
+                        }
+                        y={49}
+                        fill={"black"}
+                        textAnchor={drive.direction == "left" ?
+                            "end"
+                            :
+                            "start"
+
+                        }
+                    >
+                        {resultText}
+                    </text>
 
                     <text
                         x={xScale(1)}
@@ -261,9 +347,6 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
         const suffix = suffixes[rule] || 'th';
         return `${n}${suffix}`;
     }
-
-
-
 
     const memoizedSvg = useMemo(() => {
 
