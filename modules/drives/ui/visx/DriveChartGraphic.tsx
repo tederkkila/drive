@@ -123,12 +123,15 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
 
     let finalSpot: number;
 
-    const lastValidPlay: Play = drive.plays.reduceRight((acc, play) => {
+    /*const lastValidPlay: Play | null = drive.plays?.reduceRight((acc, play) => {
         if (!acc && play.playType !== 'extra_point') {
             return play;
         }
         return acc;
-    }, null);
+    }, null) ?? null;*/
+
+    const lastValidPlay: Play | null =
+        drive.plays?.findLast((play) => play.playType !== "extra_point") ?? null;
 
     //console.log("lastValidPlay", lastValidPlay)
 
@@ -379,16 +382,15 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                         if (play.nullifyPlay) {
                             currentPlayYards = 0;
                             currentPenaltyYards += play.penaltyYards;
+                            endSpotAbsolute = getAbsolutePosition(play.startFieldPosition, drive.direction)
+
                         } else {
                             //we have a complex penalty
                             currentPlayYards += play.yardsGained
                             currentPenaltyYards = (play.penaltyYards ? play.penaltyYards : 0);
-                            if (currentPenaltyYards > 0) {
-                                showComplexPenalty = true;
-                            }
                         }
+                        showComplexPenalty = true;
 
-                        // endSpotAbsolute = calculateEndSpotAbsolute(endSpotAbsolute, currentPlayYards, drive.direction);
                     } else {
                         // there is no penalty, so just add the yards gained
                         if (play.nullifyPlay) {
@@ -399,10 +401,10 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                     }
 
                     //drive marker calculations
-                    console.log("play", play)
-                    console.log("currentPlayYards", currentPlayYards)
-                    console.log("currentPenaltyYards", currentPenaltyYards)
-                    console.log("endSpotAbsolute", endSpotAbsolute)
+                    // console.log("play", play)
+                    // console.log("currentPlayYards", currentPlayYards)
+                    // console.log("currentPenaltyYards", currentPenaltyYards)
+                    // console.log("endSpotAbsolute", endSpotAbsolute)
 
                     let driveMarkerX = Math.min(startSpotAbsolute, endSpotAbsolute);
                     let driveMarkerWidth = Math.abs(currentPlayYards);
@@ -423,9 +425,9 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                     if (play.playType === "pass") {
                         playColor = "blue";
                     }
-                    if (play.nullifyPlay) {
-                        playColor = "yellow";
-                    }
+                    // if (play.nullifyPlay) {
+                    //     playColor = "yellow";
+                    // }
 
                     let fillOpacity = 0.5;
                     if (currentPlayYards < 0 && playColor !== "yellow"){

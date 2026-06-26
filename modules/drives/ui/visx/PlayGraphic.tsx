@@ -115,7 +115,7 @@ export const PlayGraphic = ({ x, y, width, height, direction, hash, currentPlayY
                 <polygon
                 points={directionTrianglePoints}
                 fill={`url(#${fadeDirection})`}
-                stroke={fill} strokeWidth={strokeWidth}
+                stroke={"#a8a700"} strokeWidth={strokeWidth}
                 />
             }
 
