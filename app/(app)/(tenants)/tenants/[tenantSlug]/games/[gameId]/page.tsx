@@ -50,7 +50,7 @@ const Page = async ({ params }: Props) => {
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem className="hidden md:block">
-                                    <BreadcrumbLink href="/">{tenantSlug}</BreadcrumbLink>
+                                    <BreadcrumbLink href="/public">{tenantSlug}</BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator className="hidden md:block" />
                                 <BreadcrumbItem>
