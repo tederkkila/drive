@@ -20,7 +20,7 @@ export const GameCard = ({ game }: GameCardProps) => {
 
     const gameDate: string = new Date(game.date).toLocaleDateString();
     return (
-        <Card size="sm" className="w-full max-w-sm">
+        <Card size="sm" className="w-full max-w-sm mb-2">
             <CardHeader>
                 <CardTitle>{game.name}</CardTitle>
                 <CardDescription>

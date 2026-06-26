@@ -26,7 +26,7 @@ export const Games: CollectionConfig = {
             type: "text",
             required: true,
         },
-        { name: 'date', type: 'date', required: true },
+        { name: 'date', type: 'date', required: true, index: true },
         { name: 'homeTeam', type: 'relationship', relationTo: 'teams', required: true },
         { name: 'awayTeam', type: 'relationship', relationTo: 'teams', required: true },
         { name: 'homeScore', type: 'number', defaultValue: 0 },

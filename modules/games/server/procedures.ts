@@ -116,6 +116,7 @@ export const gamesRouter = createTRPCRouter({
                         in: input.tenantSlug,
                     },
                 },
+                sort: "-date",
                 limit: input.limit ?? 10,
                 pagination: false,
             });
