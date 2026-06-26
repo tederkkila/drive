@@ -21,7 +21,7 @@ export const PlayGraphic = ({ x, y, width, height, direction, hash, currentPlayY
     const skinnyOffset = skinny ? 5 : 0;
     let strokeWidth = 1;
 
-    let fadeDirection = "";
+    let fadeDirection;
     let directionTrianglePoints = "";
     //console.log("params", x, y, width, height, direction, currentPlayYards, fill, fillOpacity)
 
