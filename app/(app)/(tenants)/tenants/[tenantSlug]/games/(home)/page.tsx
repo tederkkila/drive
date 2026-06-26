@@ -2,7 +2,6 @@ import React, { Suspense } from "react";
 import { HydrateClient, prefetch, trpc } from "@/trpc/server";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { TenantRichText } from "@/modules/tenants/ui/components/TenantRichText"
 import { GameListView } from "@/modules/games/ui/GameListView";
 
 interface Props {

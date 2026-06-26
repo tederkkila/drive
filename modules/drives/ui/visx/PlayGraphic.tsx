@@ -11,14 +11,17 @@ interface PlayGraphicProps {
     currentPlayYards: number;
     fill: string;
     fillOpacity: number;
+    skinny?: boolean;
     showBall?: boolean;
 }
 
-export const PlayGraphic = ({ x, y, width, height, direction, hash, currentPlayYards, fill, fillOpacity, showBall }: PlayGraphicProps) => {
+export const PlayGraphic = ({ x, y, width, height, direction, hash, currentPlayYards, fill, fillOpacity, skinny, showBall }: PlayGraphicProps) => {
 
     const arrowOffset = 5;
+    const skinnyOffset = skinny ? 5 : 0;
     let strokeWidth = 1;
 
+    let fadeDirection = "";
     let directionTrianglePoints = "";
     //console.log("params", x, y, width, height, direction, currentPlayYards, fill, fillOpacity)
 
@@ -57,42 +60,65 @@ export const PlayGraphic = ({ x, y, width, height, direction, hash, currentPlayY
 
     if ((direction === "left" && currentPlayYards > 0) || (direction === "right" && currentPlayYards < 0)) {
         //left pointing arrow
-        directionTrianglePoints += `${x + arrowOffset} ${y},` //left top
+        directionTrianglePoints += `${x + arrowOffset} ${y + skinnyOffset},` //left top
         directionTrianglePoints += `${x} ${y + (height/2)},` //left middle
-        directionTrianglePoints += `${x + arrowOffset} ${y + height},` //left bottom
-        directionTrianglePoints += `${x + width} ${y + height},` //right bottom
-        directionTrianglePoints += `${x + width} ${y},` //right top
+        directionTrianglePoints += `${x + arrowOffset} ${y + height - skinnyOffset},` //left bottom
+        directionTrianglePoints += `${x + width} ${y + height - skinnyOffset},` //right bottom
+        directionTrianglePoints += `${x + width} ${y + skinnyOffset},` //right top
 
         footballGraphicX = x + width - 5;
+        fadeDirection = "fadeGradientRight";
 
     } else if ((direction === "right" && currentPlayYards > 0) || (direction === "left" && currentPlayYards < 0)) {
         //right pointing arrow
-        directionTrianglePoints += `${x + width - arrowOffset} ${y},` //right top
+        directionTrianglePoints += `${x + width - arrowOffset} ${y + skinnyOffset},` //right top
         directionTrianglePoints += `${x + width} ${y + (height/2)},` //right middle
-        directionTrianglePoints += `${x + width - arrowOffset} ${y + height},` //right bottom
-        directionTrianglePoints += `${x} ${y + height},` //left bottom
-        directionTrianglePoints += `${x} ${y},` //left top
+        directionTrianglePoints += `${x + width - arrowOffset} ${y + height - skinnyOffset},` //right bottom
+        directionTrianglePoints += `${x} ${y + height - skinnyOffset},` //left bottom
+        directionTrianglePoints += `${x} ${y + skinnyOffset},` //left top
 
         footballGraphicX = x - 5;
+        fadeDirection = "fadeGradientLeft";
 
     } else {
         //no arrow, no gain
         strokeWidth = 1;
-        directionTrianglePoints += `${x} ${y},` //left top
-        directionTrianglePoints += `${x} ${y+height},` //left bottom
-        directionTrianglePoints += `${x+width} ${y+height},` //right bottom
-        directionTrianglePoints += `${x+width} ${y},` //right top
+        directionTrianglePoints += `${x} ${y + skinnyOffset},` //left top
+        directionTrianglePoints += `${x} ${y + height - skinnyOffset},` //left bottom
+        directionTrianglePoints += `${x + width} ${y + height - skinnyOffset},` //right bottom
+        directionTrianglePoints += `${x + width} ${y + skinnyOffset},` //right top
 
         footballGraphicX = x-4.5;
+        fadeDirection = "none";
     }
 
     return (
         <Group>
-            <polygon
+            <defs>
+                <linearGradient id="fadeGradientRight" >
+                    <stop offset="0%" stopColor="yellow" stopOpacity="1" />
+                    <stop offset="100%" stopColor="yellow" stopOpacity="0" />
+                </linearGradient>
+                <linearGradient id="fadeGradientLeft" >
+                    <stop offset="0%" stopColor="yellow" stopOpacity="0" />
+                    <stop offset="100%" stopColor="yellow" stopOpacity="1" />
+                </linearGradient>
+            </defs>
+
+            {!skinny || fadeDirection === "none" ?
+                <polygon
+                    points={directionTrianglePoints}
+                    fill={fill} fillOpacity={fillOpacity}
+                    stroke={fill} strokeWidth={strokeWidth}
+                />
+            :
+                <polygon
                 points={directionTrianglePoints}
-                fill={fill} fillOpacity={fillOpacity}
+                fill={`url(#${fadeDirection})`}
                 stroke={fill} strokeWidth={strokeWidth}
-            />
+                />
+            }
+
 
             {showBall && <FootballGraphic x={footballGraphicX} y={footballGraphicY()} />}
         </Group>

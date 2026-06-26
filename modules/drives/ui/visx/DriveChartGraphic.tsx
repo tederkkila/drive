@@ -133,15 +133,21 @@ export const DriveChartTriggerGraphic = ({ drive, width, height }: DriveChartTri
     //console.log("lastValidPlay", lastValidPlay)
 
     //if final play is a penalty
-    if (lastValidPlay.nullifyPlay) {
-        //only use penalty yards
-        finalSpot = lastValidPlay.startFieldPosition;
-        finalSpot = lastValidPlay.penaltyYards ? lastValidPlay.penaltyYards : 0;
+    if (lastValidPlay) {
+        if (lastValidPlay.nullifyPlay) {
+            //only use penalty yards
+            finalSpot = lastValidPlay.startFieldPosition;
+            finalSpot = lastValidPlay.penaltyYards ? lastValidPlay.penaltyYards : 0;
 
+        } else {
+            finalSpot = lastValidPlay.endFieldPosition;
+            finalSpot += lastValidPlay.penaltyYards ? lastValidPlay.penaltyYards : 0;
+        }
     } else {
-        finalSpot = lastValidPlay.endFieldPosition;
-        finalSpot += lastValidPlay.penaltyYards ? lastValidPlay.penaltyYards : 0;
+        //there is no last valid play other than extra points
+        finalSpot = 0;
     }
+
 
     const endSpotAbsolute = getAbsolutePosition(finalSpot, drive.direction);
     // const endSpotAbsolute = calculateEndSpotAbsolute(startSpotAbsolute, totalYards, drive.direction);
@@ -359,24 +365,32 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                 {/*<rect x={0} y={0} width={width} height={height} fill={fieldColor}/>*/}
                 <Group top={0} left={0}>
 
-
-
                 {drive.plays.map((play, index) => {
 
                     const startSpotAbsolute = getAbsolutePosition(play.startFieldPosition, drive.direction)
                     let endSpotAbsolute = getAbsolutePosition(play.endFieldPosition, drive.direction)
 
                     let currentPlayYards = 0;
+                    let currentPenaltyYards = 0;
+                    let showComplexPenalty = false;
+
                     if (play.penaltyYards) {
                         //console.log("play.penaltyYards", play.penaltyYards)
                         if (play.nullifyPlay) {
-                            currentPlayYards += play.penaltyYards;
+                            currentPlayYards = 0;
+                            currentPenaltyYards += play.penaltyYards;
                         } else {
-                            currentPlayYards += play.yardsGained + (play.penaltyYards ? play.penaltyYards : 0);
+                            //we have a complex penalty
+                            currentPlayYards += play.yardsGained
+                            currentPenaltyYards = (play.penaltyYards ? play.penaltyYards : 0);
+                            if (currentPenaltyYards > 0) {
+                                showComplexPenalty = true;
+                            }
                         }
 
-                        endSpotAbsolute = calculateEndSpotAbsolute(endSpotAbsolute, currentPlayYards, drive.direction);
+                        // endSpotAbsolute = calculateEndSpotAbsolute(endSpotAbsolute, currentPlayYards, drive.direction);
                     } else {
+                        // there is no penalty, so just add the yards gained
                         if (play.nullifyPlay) {
                             currentPlayYards += 0;
                         } else {
@@ -385,11 +399,17 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                     }
 
                     //drive marker calculations
-                    //console.log("play", play)
-                    //console.log("currentPlayYards", currentPlayYards)
+                    console.log("play", play)
+                    console.log("currentPlayYards", currentPlayYards)
+                    console.log("currentPenaltyYards", currentPenaltyYards)
+                    console.log("endSpotAbsolute", endSpotAbsolute)
 
                     let driveMarkerX = Math.min(startSpotAbsolute, endSpotAbsolute);
                     let driveMarkerWidth = Math.abs(currentPlayYards);
+
+                    const penaltyStartAbsolute = calculateEndSpotAbsolute(endSpotAbsolute, currentPenaltyYards, drive.direction);
+                    let penaltyDriveMarkerX = Math.min(penaltyStartAbsolute, endSpotAbsolute);
+                    let penaltyDriveMarkerWidth = Math.abs(currentPenaltyYards);
 
                     //console.log("   driveMarkerX", driveMarkerX)
                     //console.log("   driveMarkerWidth", driveMarkerWidth)
@@ -512,8 +532,6 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                         })
                     }
 
-
-
                     if (
                         searchFiltered ||
                         downFiltered ||
@@ -564,8 +582,24 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                                 hash={play.hash}
                                 currentPlayYards={currentPlayYards}
                                 fill={playColor} fillOpacity={fillOpacity}
+                                skinny={false}
                                 showBall
                             />
+
+                            {showComplexPenalty &&
+                                <PlayGraphic
+                                    x={xField(penaltyDriveMarkerX)}
+                                    y={yScale(10)}
+                                    width={xScale(penaltyDriveMarkerWidth)}
+                                    height={yScale(30)}
+                                    direction={drive.direction}
+                                    hash={play.hash}
+                                    currentPlayYards={currentPenaltyYards}
+                                    fill={"yellow"} fillOpacity={0.8}
+                                    skinny={showComplexPenalty}
+                                    showBall={false}
+                                />
+                            }
 
                             <text
                                 x={drive.direction == 'left' ?
