@@ -27,30 +27,12 @@ function getQueryClient() {
     return browserQueryClient;
 }
 
-/*function getUrl() {
+function getUrl() {
     const base = (() => {
         if (typeof window !== 'undefined') return '';
-        /!*return process.env.NEXT_PUBLIC_APP_URL;*!/
-        return 'http://localhost:3000';
+        return process.env.NEXT_PUBLIC_APP_URL;
     })();
     return `${base}/api/drive`;
-}*/
-
-function getUrl() {
-    // 1. Client-side execution (Browser)
-    if (typeof window !== 'undefined') {
-        // Keep requests relative so they preserve the active subdomain (e.g., nz-u18)
-        return '/api/drive';
-    }
-
-    // 2. Server-side execution (SSR)
-    // Avoid using "next/headers" to keep the Next.js compiler happy
-    if (process.env.NEXT_PUBLIC_APP_URL) {
-        return `${process.env.NEXT_PUBLIC_APP_URL}/api/drive`;
-    }
-
-    // 3. Localhost Fallback
-    return 'http://127.0.0';
 }
 
 export function TRPCReactProvider(
