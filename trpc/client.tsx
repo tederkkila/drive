@@ -27,17 +27,23 @@ function getQueryClient() {
     return browserQueryClient;
 }
 
-function getUrl() {
-    const base = (() => {
-        if (typeof window !== 'undefined') return '';
-        return process.env.NEXT_PUBLIC_APP_URL;
-    })();
-    return `${base}/api/drive`;
+function getUrl(origin?: string) {
+    if (typeof window !== 'undefined') {
+        return '/api/drive';
+    }
+
+    if (!origin) {
+        throw new Error('Missing origin for server-side tRPC client');
+    }
+
+    return `${origin}/api/drive`;
 }
 
 export function TRPCReactProvider(
     props: Readonly<{
         children: React.ReactNode;
+        origin?: string;
+        tenantSlug?: string;
     }>,
 ) {
     // NOTE: Avoid useState when initializing the query client if you don't
@@ -51,7 +57,16 @@ export function TRPCReactProvider(
             links: [
                 httpBatchLink({
                     transformer: superjson,
-                    url: getUrl(),
+                    url: getUrl(props.origin),
+                    headers() {
+                        if (!props.tenantSlug) {
+                            return {};
+                        }
+
+                        return {
+                            'x-tenant-slug': props.tenantSlug,
+                        };
+                    },
                 }),
             ],
         }),
