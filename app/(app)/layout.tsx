@@ -1,8 +1,6 @@
 import React from "react";
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import type { Metadata } from "next";
-import { headers } from 'next/headers';
-import { TRPCReactProvider } from "@/trpc/client";
 import { Analytics } from '@vercel/analytics/next';
 
 import { Theme, ThemePanel } from "@radix-ui/themes";
@@ -31,16 +29,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
 
-  //solve trpc www fallback issue
-  const headersList = await headers();
-
-  const host = headersList.get('x-forwarded-host') ?? headersList.get('host');
-  const proto = headersList.get('x-forwarded-proto') ?? 'https';
-
-  const origin = `${proto}://${host}`;
-
-  console.log('origin', origin);
-
   return (
     <html
       lang="en"
@@ -48,13 +36,11 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col">
       <NuqsAdapter>
-        <TRPCReactProvider url={origin}>
           <Theme radius="medium">
             {children}
             {/*<ThemePanel />*/}
             <Analytics />
           </Theme>
-        </TRPCReactProvider>
       </NuqsAdapter>
       </body>
     </html>
