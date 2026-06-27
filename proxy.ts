@@ -24,7 +24,7 @@ export default async function proxy(req: NextRequest) {
         const tenantSlug = hostname.replace(`.${rootDomain}`, "");
 
         if (tenantSlug !== "www") {
-            return NextResponse.rewrite(new URL(`/tenants/${tenantSlug}${url.pathname}`, req.url) as any);
+            return NextResponse.rewrite(new URL(`/tenants/${tenantSlug}${url.pathname}${url.search}`, req.url) as any);
         }
     }
 
