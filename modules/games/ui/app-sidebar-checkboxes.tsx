@@ -33,7 +33,7 @@ import { useQuery } from "@tanstack/react-query";
 
 // This is sample data.
 const data = {
-    versions: ["NZL U18"/*, "AUS U18"*/],
+    versions: ["NZL"/*, "AUS U18"*/],
     navMain: [
         // {
         //     title: "Drive Number",
