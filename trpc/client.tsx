@@ -27,17 +27,26 @@ function getQueryClient() {
     return browserQueryClient;
 }
 
-function getUrl() {
+/*function getUrl() {
     const base = (() => {
         if (typeof window !== 'undefined') return '';
         return process.env.NEXT_PUBLIC_APP_URL;
     })();
     return `${base}/api/drive`;
+}*/
+
+function getUrl(baseUrl?: string) {
+    if (typeof window !== 'undefined') {
+        return '/api/drive';
+    }
+
+    return `${baseUrl ?? process.env.NEXT_PUBLIC_APP_URL}/api/drive`;
 }
 
 export function TRPCReactProvider(
     props: Readonly<{
         children: React.ReactNode;
+        url?: string;
     }>,
 ) {
     // NOTE: Avoid useState when initializing the query client if you don't
@@ -51,7 +60,7 @@ export function TRPCReactProvider(
             links: [
                 httpBatchLink({
                     transformer: superjson,
-                    url: getUrl(),
+                    url: getUrl(props.url),
                 }),
             ],
         }),

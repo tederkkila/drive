@@ -1,6 +1,7 @@
 import React from "react";
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import type { Metadata } from "next";
+import { headers } from 'next/headers';
 import { TRPCReactProvider } from "@/trpc/client";
 import { Analytics } from '@vercel/analytics/next';
 
@@ -24,11 +25,22 @@ export const metadata: Metadata = {
   description: "Driven to Win",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+  //solve trpc www fallback issue
+  const headersList = await headers();
+
+  const host = headersList.get('x-forwarded-host') ?? headersList.get('host');
+  const proto = headersList.get('x-forwarded-proto') ?? 'https';
+
+  const origin = `${proto}://${host}`;
+
+  console.log('origin', origin);
+
   return (
     <html
       lang="en"
@@ -36,7 +48,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
       <NuqsAdapter>
-        <TRPCReactProvider>
+        <TRPCReactProvider url={origin}>
           <Theme radius="medium">
             {children}
             {/*<ThemePanel />*/}
