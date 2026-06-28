@@ -15,7 +15,7 @@ import {
     SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { ErrorBoundary } from "react-error-boundary";
-import { GameView } from "@/modules/games/ui/GameView";
+import { GameViewClient } from "@/modules/games/ui/GameViewClient";
 import { caller, HydrateClient, prefetch, trpc } from "@/trpc/server";
 import { GameProvider } from "@/modules/games/ui/GameContext";
 
@@ -69,7 +69,7 @@ const Page = async ({ params }: Props) => {
                         <HydrateClient>
                             <ErrorBoundary fallback={<div>Something went wrong</div>}>
                                 <Suspense fallback={<div>GameView Loading...</div>}>
-                                    <GameView gameId={ gameId } />
+                                    <GameViewClient gameId={ gameId } />
                                 </Suspense>
                             </ErrorBoundary>
                         </HydrateClient>

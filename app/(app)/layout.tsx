@@ -1,7 +1,6 @@
 import React from "react";
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import type { Metadata } from "next";
-import { TRPCReactProvider } from "@/trpc/client";
 import { Analytics } from '@vercel/analytics/next';
 
 import { Theme, ThemePanel } from "@radix-ui/themes";
@@ -24,11 +23,12 @@ export const metadata: Metadata = {
   description: "Driven to Win",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html
       lang="en"
@@ -36,13 +36,11 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
       <NuqsAdapter>
-        <TRPCReactProvider>
           <Theme radius="medium">
             {children}
             {/*<ThemePanel />*/}
             <Analytics />
           </Theme>
-        </TRPCReactProvider>
       </NuqsAdapter>
       </body>
     </html>
