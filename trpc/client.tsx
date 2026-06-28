@@ -59,13 +59,21 @@ export function TRPCReactProvider(
                     transformer: superjson,
                     url: getUrl(props.origin),
                     headers() {
-                        if (!props.tenantSlug) {
-                            return {};
+                        const headers: Record<string, string> = {};
+
+                        if (props.tenantSlug) {
+                            headers['x-tenant-slug'] = props.tenantSlug;
                         }
 
-                        return {
-                            'x-tenant-slug': props.tenantSlug,
-                        };
+                        if (
+                            typeof window === 'undefined' &&
+                            process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+                        ) {
+                            headers['x-vercel-protection-bypass'] =
+                                process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+                        }
+
+                        return headers;
                     },
                 }),
             ],
