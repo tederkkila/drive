@@ -145,9 +145,27 @@ export interface Tenant {
   image?: (string | null) | Media;
   favicon?: (string | null) | Media;
   /**
-   * This is the description of the location
+   * This is the description of the tenant team
    */
   content?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * This is the description of the tenant team
+   */
+  calendarContent?: {
     root: {
       type: string;
       children: {
@@ -413,6 +431,7 @@ export interface TenantsSelect<T extends boolean = true> {
   image?: T;
   favicon?: T;
   content?: T;
+  calendarContent?: T;
   updatedAt?: T;
   createdAt?: T;
 }

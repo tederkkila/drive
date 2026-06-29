@@ -30,7 +30,7 @@ const Page = async ({ params }: Props) => {
 
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col ">
             <HydrateClient>
                 <ErrorBoundary fallback={<div>Error rendering content</div>}>
                     <Suspense>

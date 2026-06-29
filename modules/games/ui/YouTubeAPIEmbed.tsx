@@ -86,10 +86,11 @@ export const YouTubeAPIEmbed = ({ videoId }: YouTubeAPIEmbedProps) => {
         width: '100%',
         playerVars: {
             start: startTime, // Initial start time on the load
+            end: endTime,
             controls: 1,
             rel: 0,
-            autoplay: 1,
-            end: endTime,
+            autoplay: 0,
+            playsinline: 1,
         },
     };
 

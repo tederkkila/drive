@@ -8,7 +8,7 @@ interface GameListViewProps {
 export const GameListView = ({ tenantSlug }: GameListViewProps) => {
     return (
         <div>
-            <h1 className="mb-4">Available Games</h1>
+            <h1 className="mb-4 mt-8 text-2xl">Available Games</h1>
 
             <Suspense>
                 <GameList tenantSlug={ tenantSlug } />

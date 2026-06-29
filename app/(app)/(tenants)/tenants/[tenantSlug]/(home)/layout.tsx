@@ -43,7 +43,7 @@ const Layout = async ({ children, params }: LayoutProps) => {
     );
 
     return (
-        <div className="wave4 min-h-screen relative w-full">
+        <div className="min-h-screen relative w-full bg-secondary">
 
             <HydrateClient>
                 <ErrorBoundary fallback={<div>Error Loading the Navigation Bar</div>}>
@@ -54,7 +54,7 @@ const Layout = async ({ children, params }: LayoutProps) => {
             </HydrateClient>
 
             <div className="min-h-[calc(100vh-8rem)] bg-[#edededcc] sm:border-x
-                max-w-full
+                max-w-full sm:max-w-[calc(100vw-2rem)] lg:max-w-7xl
                 mx-auto">
                 <div className="p-4">
                     { children }
