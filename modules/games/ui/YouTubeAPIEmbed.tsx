@@ -89,7 +89,7 @@ export const YouTubeAPIEmbed = ({ videoId }: YouTubeAPIEmbedProps) => {
             end: endTime,
             controls: 1,
             rel: 0,
-            autoplay: 0,
+            autoplay: 1,
             playsinline: 1,
         },
     };
