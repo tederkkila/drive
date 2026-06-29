@@ -54,7 +54,25 @@ export const Tenants: CollectionConfig = {
             name: "content",
             type: "richText",
             admin: {
-                description: "This is the description of the location",
+                description: "This is the description of the tenant team",
+            },
+            editor: lexicalEditor({
+                features: ({ defaultFeatures }) => [
+                    ...defaultFeatures,
+                    // Add a fixed toolbar
+                    FixedToolbarFeature(),
+                    // Add custom features
+                    HeadingFeature({}),
+                    OrderedListFeature(),
+                    UnorderedListFeature(),
+                ],
+            }),
+        },
+        {
+            name: "calendarContent",
+            type: "richText",
+            admin: {
+                description: "This is the description of the tenant team",
             },
             editor: lexicalEditor({
                 features: ({ defaultFeatures }) => [
