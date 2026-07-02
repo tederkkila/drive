@@ -1,18 +1,15 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Drive, Team } from "@/payload-types";
-// import { Button } from "@/components/ui/button";
 import {
     Accordion,
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion"
-// import { useGameVideo } from "@/modules/games/ui/GameContext";
 import { DriveChartGraphic, DriveChartTriggerGraphic } from "@/modules/drives/ui/visx/DriveChartGraphic";
 import { ParentSize, /*useParentSize*/ } from "@visx/responsive";
 import { useGameVideo } from "@/modules/games/ui/GameContext";
-
-
+import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 
 function hasPopulatedPossessingTeam(
     drive: Drive,
@@ -33,14 +30,75 @@ interface DriveChartProps {
 
 export const DriveChart = ({ drives }: DriveChartProps) => {
 
-    //console.log("drives", drives)
+    const {
+        expandedDriveIds,
+        setExpandedDriveIds,
+        setStartTime,
+        setEndTime,
+        triggerSeek,
+    } = useGameVideo();
+
+    const lastAutoPlayedPlayIdRef = useRef<string | null>(null);
+
+    const [, setUrlExpandedDriveIds] = useQueryState(
+        "expandedDriveIds",
+        parseAsArrayOf(parseAsString).withDefault([])
+    );
+
+    const [urlPlayId] = useQueryState(
+        "playId",
+        parseAsString.withDefault("")
+    );
 
     if (!drives || drives.length === 0) return (
         <div>No drives found</div>
     )
 
     const validDrives = drives.filter(hasPopulatedPossessingTeam);
-    const { expandedDriveIds, setExpandedDriveIds } = useGameVideo();
+
+    useEffect(() => {
+        if (!urlPlayId) return;
+        if (lastAutoPlayedPlayIdRef.current === urlPlayId) return;
+
+        const matchingDrive = validDrives.find((drive) =>
+            drive.plays.some((play) => play.id === urlPlayId)
+        );
+
+        const matchingPlay = matchingDrive?.plays.find((play) => play.id === urlPlayId);
+
+        if (!matchingDrive || !matchingPlay) return;
+
+        lastAutoPlayedPlayIdRef.current = urlPlayId;
+
+        const nextExpandedDriveIds = expandedDriveIds.includes(matchingDrive.id)
+            ? expandedDriveIds
+            : [...expandedDriveIds, matchingDrive.id];
+
+        if (nextExpandedDriveIds.length !== expandedDriveIds.length) {
+            setExpandedDriveIds(nextExpandedDriveIds);
+            setUrlExpandedDriveIds(nextExpandedDriveIds);
+        }
+
+        setStartTime(matchingPlay.youTubeStart);
+        setEndTime(matchingPlay.youTubeEnd);
+        triggerSeek();
+    }, [
+        urlPlayId,
+        validDrives,
+        expandedDriveIds,
+        setExpandedDriveIds,
+        setUrlExpandedDriveIds,
+        setStartTime,
+        setEndTime,
+        triggerSeek,
+    ]);
+
+
+    const handleExpandedDriveIdsChange = (ids: string[]) => {
+        setExpandedDriveIds(ids);
+        setUrlExpandedDriveIds(ids.length > 0 ? ids : null);
+    };
+
     //const { parentRef, width, height } = useParentSize({ debounceTime: 150 });
 
     // console.log("parentRef", parentRef)
@@ -55,7 +113,7 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
                 // defaultValue="shipping"
                 className="w-full space-y-1"
                 value={expandedDriveIds}
-                onValueChange={setExpandedDriveIds}
+                onValueChange={handleExpandedDriveIdsChange}
             >
                 {validDrives.map((drive) => (
                     <AccordionItem value={drive.id} key={drive.id} className="bg-transparent overflow-hidden">

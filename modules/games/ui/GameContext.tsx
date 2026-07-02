@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 
 export type GameContextValue = {
     videoId: string;
@@ -12,7 +12,7 @@ export type GameContextValue = {
     triggerSeek: () => void;      // New action to force a jump
     seekTriggerCount: number;     // Observable dependency item
     expandedDriveIds: string[];
-    setExpandedDriveIds: (ids: string[]) => void;
+    setExpandedDriveIds: React.Dispatch<React.SetStateAction<string[]>>;
 };
 
 export const GameContext = createContext<GameContextValue | null>(null);
@@ -22,13 +22,25 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
     const [startTime, setStartTime] = useState<number>(0);
     const [endTime, setEndTime] = useState<number>(3600);
     const [seekTriggerCount, setSeekTriggerCount] = useState<number>(0);
-    const [expandedDriveIds, setExpandedDriveIds] = useState<string[]>([]);
+    const [expandedDriveIdsState, setExpandedDriveIdsState] = useState<string[]>([]);
 
-    const triggerSeek = () => {
+    const setExpandedDriveIds: React.Dispatch<React.SetStateAction<string[]>> = useCallback((value) => {
+        setExpandedDriveIdsState((previous) => {
+            const next = typeof value === "function" ? value(previous) : value;
+
+            const isSame =
+                previous.length === next.length &&
+                previous.every((id, index) => id === next[index]);
+
+            return isSame ? previous : next;
+        });
+    }, []);
+
+    const triggerSeek = useCallback(() => {
         setSeekTriggerCount(prev => prev + 1);
-    };
+    }, []);
 
-    const value = {
+    const value = useMemo(() => ({
         videoId,
         setVideoId,
         startTime,
@@ -37,9 +49,17 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
         setEndTime,
         triggerSeek,
         seekTriggerCount,
-        expandedDriveIds,
+        expandedDriveIds: expandedDriveIdsState,
         setExpandedDriveIds
-    };
+    }), [
+        videoId,
+        startTime,
+        endTime,
+        triggerSeek,
+        seekTriggerCount,
+        expandedDriveIdsState,
+        setExpandedDriveIds
+    ]);
 
     return (
         <GameContext.Provider value={value}>

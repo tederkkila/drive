@@ -210,7 +210,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         hash: parseAsArrayOf(parseAsString).withDefault([]),
         gain: parseAsArrayOf(parseAsString).withDefault([]),
         fieldPosition: parseAsArrayOf(parseAsString).withDefault([]),
-        // Easily add more groups here...
+        expandedDriveIds: parseAsArrayOf(parseAsString).withDefault([]),
     }
 
     const [groupStates, setGroupStates] = useQueryStates(groupParsers)
@@ -218,6 +218,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const [localSearch, setLocalSearch] = useState(groupStates.search);
 
     const { expandedDriveIds, setExpandedDriveIds } = useGameVideo();
+
     const params = useParams();
     const gameId = params?.gameId as string;
     const trpc = useTRPC();
@@ -229,20 +230,40 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const driveIds = gameData?.drives?.map(d => d.id) ?? [];
     const allExpanded = driveIds.length > 0 && expandedDriveIds.length === driveIds.length;
 
+    const urlExpandedDriveIds = groupStates.expandedDriveIds;
+
+    const expandedDriveIdsKey = expandedDriveIds.join(",");
+    const urlExpandedDriveIdsKey = urlExpandedDriveIds.join(",");
+
+    useEffect(() => {
+        if (urlExpandedDriveIdsKey === expandedDriveIdsKey) return;
+
+        setExpandedDriveIds(urlExpandedDriveIds);
+    }, [
+        urlExpandedDriveIdsKey,
+        expandedDriveIdsKey,
+        urlExpandedDriveIds,
+        setExpandedDriveIds,
+    ]);
+
+
+
+    useEffect(() => {
+        setLocalSearch(groupStates.search);
+    }, [groupStates.search]);
+
     const toggleAllDrives = () => {
         if (allExpanded) {
             setExpandedDriveIds([]);
+            setGroupStates({ expandedDriveIds: null });
         } else {
             setExpandedDriveIds(driveIds);
+            setGroupStates({ expandedDriveIds: driveIds });
         }
     };
 
     // 1. Initialize the transition hook
     const [isPending, startTransition] = useTransition();
-
-    useEffect(() => {
-        setLocalSearch(groupStates.search);
-    }, [groupStates.search]);
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -257,7 +278,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     const totalActiveFilters = Object.entries(groupStates).reduce(
         (acc, [key, value]) => {
-            // 1. If it's your search string, count it as exactly 1 if it has text inside
+
+            //don't count the expandedDriveIds
+            if (key === 'expandedDriveIds') {
+                return acc;
+            }
+
+            //If it's your search string, count it as exactly 1 if it has text inside
             if (key === 'search') {
                 return acc + (typeof value === 'string' && value.trim() !== '' ? 1 : 0);
             }
@@ -272,6 +299,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     const handleClearAllGroups = () => {
         const clearedState = Object.keys(groupParsers).reduce((acc, key) => {
+
+            //don't clear the expandedDriveIds'
+            if (key === "expandedDriveIds") {
+                return acc;
+            }
+
             acc[key as keyof typeof groupParsers] = null
             return acc
         }, {} as Record<keyof typeof groupParsers, null>)
@@ -300,10 +333,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <Sidebar {...props}>
             <SidebarHeader>
 
-                <VersionSwitcher
+                {/*<VersionSwitcher
                     versions={data.versions}
                     defaultVersion={data.versions[0]}
-                />
+                />*/}
 
                 <div className="px-4 py-2 border-b">
                     <div className="flex flex-col gap-2">

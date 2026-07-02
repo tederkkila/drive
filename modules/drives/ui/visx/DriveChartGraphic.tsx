@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { Drive } from "@/payload-types";
 type Play = NonNullable<Drive["plays"]>[number];
 import { Group } from '@visx/group';
@@ -16,7 +16,7 @@ const poppins = Poppins({
     weight: ["700"],
 });
 
-import { useQueryStates, parseAsArrayOf, parseAsString } from 'nuqs';
+import { useQueryState, useQueryStates, parseAsArrayOf, parseAsString } from 'nuqs';
 
 const groupParsers = {
     search: parseAsString
@@ -311,6 +311,7 @@ interface DriveChartGraphicProps {
 export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicProps) => {
 
     const [filters, _setFilters] = useQueryStates(groupParsers);
+    const [, setUrlPlayId] = useQueryState("playId", parseAsString.withDefault(""));
 
     if (!drive.plays) return null;
     if (width === 0) return null;
@@ -333,14 +334,17 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
 
     const { setStartTime, setEndTime, triggerSeek } = useGameVideo();
 
-    const handleClick = (
-        // event: React.MouseEvent<SVGRectElement, MouseEvent>,
-        play: Play
-    ) => {
+    const handleClick = useCallback((play: Play) => {
+        setUrlPlayId(play.id);
         setStartTime(play.youTubeStart);
         setEndTime(play.youTubeEnd);
         triggerSeek();
-    }
+    }, [
+        setUrlPlayId,
+        setStartTime,
+        setEndTime,
+        triggerSeek,
+    ]);
 
     function getOrdinal(n: number): string {
         const pr = new Intl.PluralRules('en-US', { type: 'ordinal' });
@@ -638,7 +642,7 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                 </Group>
             </svg>
         );
-    }, [width, drive.plays, filters]);
+    }, [width, height, drive, drive.plays, filters, handleClick]);
 
     return (
         <div>
