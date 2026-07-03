@@ -1,18 +1,15 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Drive, Team } from "@/payload-types";
-// import { Button } from "@/components/ui/button";
 import {
     Accordion,
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion"
-// import { useGameVideo } from "@/modules/games/ui/GameContext";
 import { DriveChartGraphic, DriveChartTriggerGraphic } from "@/modules/drives/ui/visx/DriveChartGraphic";
 import { ParentSize, /*useParentSize*/ } from "@visx/responsive";
 import { useGameVideo } from "@/modules/games/ui/GameContext";
-
-
+import { parseAsArrayOf, parseAsInteger, parseAsString, useQueryState } from "nuqs";
 
 function hasPopulatedPossessingTeam(
     drive: Drive,
@@ -33,14 +30,85 @@ interface DriveChartProps {
 
 export const DriveChart = ({ drives }: DriveChartProps) => {
 
-    //console.log("drives", drives)
+    const {
+        expandedDriveIds,
+        setExpandedDriveIds,
+        triggerSeekTo,
+    } = useGameVideo();
+
+    const lastAutoPlayedPlayIdRef = useRef<string | null>(null);
+    const hasHandledInitialPlayIdRef = useRef(false);
+
+    const [, setUrlExpandedDriveNumbers] = useQueryState(
+        "drive",
+        parseAsArrayOf(parseAsInteger).withDefault([])
+    );
+
+    const [urlPlayId] = useQueryState(
+        "playId",
+        parseAsString.withDefault("")
+    );
 
     if (!drives || drives.length === 0) return (
         <div>No drives found</div>
     )
 
     const validDrives = drives.filter(hasPopulatedPossessingTeam);
-    const { expandedDriveIds, setExpandedDriveIds } = useGameVideo();
+    const driveIds = validDrives.map((drive) => drive.id);
+
+    const getDriveNumbersFromIds = (ids: string[]) => {
+        return ids
+            .map((id) => driveIds.indexOf(id))
+            .filter((index) => index !== -1)
+            .map((index) => index + 1);
+    };
+
+    useEffect(() => {
+        if (hasHandledInitialPlayIdRef.current) return;
+        if (validDrives.length === 0) return;
+
+        hasHandledInitialPlayIdRef.current = true;
+
+        if (!urlPlayId) return;
+        if (lastAutoPlayedPlayIdRef.current === urlPlayId) return;
+
+        const matchingDrive = validDrives.find((drive) =>
+            drive.plays.some((play) => play.id === urlPlayId)
+        );
+
+        const matchingPlay = matchingDrive?.plays.find((play) => play.id === urlPlayId);
+
+        if (!matchingDrive || !matchingPlay) return;
+
+        lastAutoPlayedPlayIdRef.current = urlPlayId;
+
+        const nextExpandedDriveIds = expandedDriveIds.includes(matchingDrive.id)
+            ? expandedDriveIds
+            : [...expandedDriveIds, matchingDrive.id];
+
+        if (nextExpandedDriveIds.length !== expandedDriveIds.length) {
+            setExpandedDriveIds(nextExpandedDriveIds);
+            setUrlExpandedDriveNumbers(getDriveNumbersFromIds(nextExpandedDriveIds));
+        }
+
+        triggerSeekTo(matchingPlay.youTubeStart, matchingPlay.youTubeEnd);
+    }, [
+        urlPlayId,
+        validDrives,
+        expandedDriveIds,
+        setExpandedDriveIds,
+        setUrlExpandedDriveNumbers,
+        triggerSeekTo,
+    ]);
+
+
+    const handleExpandedDriveIdsChange = (ids: string[]) => {
+        const driveNumbers = getDriveNumbersFromIds(ids);
+
+        setExpandedDriveIds(ids);
+        setUrlExpandedDriveNumbers(ids.length > 0 ? driveNumbers : null);
+    };
+
     //const { parentRef, width, height } = useParentSize({ debounceTime: 150 });
 
     // console.log("parentRef", parentRef)
@@ -55,7 +123,7 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
                 // defaultValue="shipping"
                 className="w-full space-y-1"
                 value={expandedDriveIds}
-                onValueChange={setExpandedDriveIds}
+                onValueChange={handleExpandedDriveIdsChange}
             >
                 {validDrives.map((drive) => (
                     <AccordionItem value={drive.id} key={drive.id} className="bg-transparent overflow-hidden">

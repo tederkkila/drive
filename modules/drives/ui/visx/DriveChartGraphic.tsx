@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { Drive } from "@/payload-types";
 type Play = NonNullable<Drive["plays"]>[number];
 import { Group } from '@visx/group';
@@ -16,7 +16,7 @@ const poppins = Poppins({
     weight: ["700"],
 });
 
-import { useQueryStates, parseAsArrayOf, parseAsString } from 'nuqs';
+import { useQueryState, useQueryStates, parseAsArrayOf, parseAsString } from 'nuqs';
 
 const groupParsers = {
     search: parseAsString
@@ -311,6 +311,17 @@ interface DriveChartGraphicProps {
 export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicProps) => {
 
     const [filters, _setFilters] = useQueryStates(groupParsers);
+    const [playId, setUrlPlayId] = useQueryState("playId", parseAsString.withDefault(""));
+
+    const filtersKey = [
+        filters.search,
+        filters.playType.join(","),
+        filters.down.join(","),
+        filters.distance.join(","),
+        filters.hash.join(","),
+        filters.gain.join(","),
+        filters.fieldPosition.join(","),
+    ].join("|");
 
     if (!drive.plays) return null;
     if (width === 0) return null;
@@ -331,16 +342,21 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
         return xScale(x+10);
     }
 
-    const { setStartTime, setEndTime, triggerSeek } = useGameVideo();
+    const { triggerSeekTo } = useGameVideo();
 
-    const handleClick = (
-        // event: React.MouseEvent<SVGRectElement, MouseEvent>,
-        play: Play
-    ) => {
-        setStartTime(play.youTubeStart);
-        setEndTime(play.youTubeEnd);
-        triggerSeek();
-    }
+    const handleClick = useCallback((play: Play) => {
+        if (!play.id) return;
+
+        triggerSeekTo(play.youTubeStart, play.youTubeEnd);
+
+        if (play.id !== playId) {
+            setUrlPlayId(play.id);
+        }
+    }, [
+        playId,
+        setUrlPlayId,
+        triggerSeekTo,
+    ]);
 
     function getOrdinal(n: number): string {
         const pr = new Intl.PluralRules('en-US', { type: 'ordinal' });
@@ -369,6 +385,11 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                 <Group top={0} left={0}>
 
                 {drive.plays.map((play, index) => {
+
+                    const selectedPlay = play.id == playId;
+                    // if (selectedPlay) {
+                    //     console.log("selectedPlay", selectedPlay)
+                    // }
 
                     const startSpotAbsolute = getAbsolutePosition(play.startFieldPosition, drive.direction)
                     let endSpotAbsolute = getAbsolutePosition(play.endFieldPosition, drive.direction)
@@ -631,6 +652,10 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                                   onClick={() => handleClick(play)}
                                   style={{ cursor: 'pointer' }}
                             />
+
+                            {selectedPlay &&
+                                <rect x={0} y={2} width={5} height={playHeight-4} fill={"orange"} fillOpacity={0.5}  />
+                            }
                         </Group>
                     )
                 })}
@@ -638,7 +663,7 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                 </Group>
             </svg>
         );
-    }, [width, drive.plays, filters]);
+    }, [width, height, drive.id, drive.direction, drive.plays, playId, filtersKey, handleClick]);
 
     return (
         <div>

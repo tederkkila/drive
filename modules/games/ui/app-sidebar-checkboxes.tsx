@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
-import { useQueryStates, parseAsArrayOf, parseAsString, debounce } from "nuqs"
+import { useQueryStates, parseAsArrayOf, parseAsInteger, parseAsString, debounce } from "nuqs"
 import { Trash2, ChevronDown, ChevronUp } from "lucide-react"
 import { Label } from "@/components/ui/label";
 import { useGameVideo } from "@/modules/games/ui/GameContext";
@@ -210,14 +210,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         hash: parseAsArrayOf(parseAsString).withDefault([]),
         gain: parseAsArrayOf(parseAsString).withDefault([]),
         fieldPosition: parseAsArrayOf(parseAsString).withDefault([]),
-        // Easily add more groups here...
+        drive: parseAsArrayOf(parseAsInteger).withDefault([]),
+        playId: parseAsString.withDefault(""),
     }
 
     const [groupStates, setGroupStates] = useQueryStates(groupParsers)
 
     const [localSearch, setLocalSearch] = useState(groupStates.search);
 
-    const { expandedDriveIds, setExpandedDriveIds } = useGameVideo();
+    const { expandedDriveIds, setExpandedDriveIds, triggerPause } = useGameVideo();
+
     const params = useParams();
     const gameId = params?.gameId as string;
     const trpc = useTRPC();
@@ -226,23 +228,47 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         trpc.games.getGameWithDrives.queryOptions({ gameId }, { enabled: !!gameId })
     );
 
-    const driveIds = gameData?.drives?.map(d => d.id) ?? [];
+    const driveIds = gameData?.drives?.map(drive => drive.id) ?? [];
     const allExpanded = driveIds.length > 0 && expandedDriveIds.length === driveIds.length;
 
-    const toggleAllDrives = () => {
-        if (allExpanded) {
-            setExpandedDriveIds([]);
-        } else {
-            setExpandedDriveIds(driveIds);
-        }
-    };
+    const urlExpandedDriveIndexes = groupStates.drive;
+    const urlExpandedDriveIds = urlExpandedDriveIndexes
+        .map((driveNumber) => driveIds[driveNumber - 1])
+        .filter(Boolean);
 
-    // 1. Initialize the transition hook
-    const [isPending, startTransition] = useTransition();
+    const expandedDriveIdsKey = expandedDriveIds.join(",");
+    const urlExpandedDriveIdsKey = urlExpandedDriveIds.join(",");
+
+    useEffect(() => {
+        if (driveIds.length === 0) return;
+        if (urlExpandedDriveIdsKey === expandedDriveIdsKey) return;
+
+        setExpandedDriveIds(urlExpandedDriveIds);
+    }, [
+        driveIds.length,
+        urlExpandedDriveIdsKey,
+        expandedDriveIdsKey,
+        urlExpandedDriveIds,
+        setExpandedDriveIds,
+    ]);
 
     useEffect(() => {
         setLocalSearch(groupStates.search);
     }, [groupStates.search]);
+
+    const toggleAllDrives = () => {
+        if (allExpanded) {
+            setExpandedDriveIds([]);
+            setGroupStates({ drive: null });
+        } else {
+            const allDriveNumbers = driveIds.map((_, index) => index + 1);
+            setExpandedDriveIds(driveIds);
+            setGroupStates({ drive: allDriveNumbers });
+        }
+    };
+
+    // 1. Initialize the transition hook
+    const [, startTransition] = useTransition();
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -257,7 +283,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     const totalActiveFilters = Object.entries(groupStates).reduce(
         (acc, [key, value]) => {
-            // 1. If it's your search string, count it as exactly 1 if it has text inside
+
+            //don't count the expandedDriveIds
+            if (key === 'drive' || key === 'playId') {
+                return acc;
+            }
+
+            //If it's your search string, count it as exactly 1 if it has text inside
             if (key === 'search') {
                 return acc + (typeof value === 'string' && value.trim() !== '' ? 1 : 0);
             }
@@ -268,15 +300,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         0
     );
 
-    const isClearDisabled = totalActiveFilters === 0
+    const hasSelectedPlay = groupStates.playId.trim() !== "";
+    const isClearDisabled = totalActiveFilters === 0 && !hasSelectedPlay
 
     const handleClearAllGroups = () => {
+
+        const shouldPauseVideo = groupStates.playId.trim() !== "";
+
         const clearedState = Object.keys(groupParsers).reduce((acc, key) => {
+
+            // don't clear expanded drives
+            if (key === "drive") {
+                return acc;
+            }
+
             acc[key as keyof typeof groupParsers] = null
             return acc
-        }, {} as Record<keyof typeof groupParsers, null>)
+        }, {} as Partial<Record<keyof typeof groupParsers, null>>)
 
         setGroupStates(clearedState)
+
+        if (shouldPauseVideo) {
+            triggerPause();
+        }
     }
 
     const handleGroupChange = (groupKey: keyof typeof groupParsers, title: string, checked: boolean) => {

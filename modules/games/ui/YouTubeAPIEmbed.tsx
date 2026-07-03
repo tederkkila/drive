@@ -17,26 +17,48 @@ interface YouTubeAPIEmbedProps {
 
 export const YouTubeAPIEmbed = ({ videoId }: YouTubeAPIEmbedProps) => {
 
-    const { startTime, endTime, seekTriggerCount, } = useGameVideo();
+    const { seekRequest, pauseTriggerCount } = useGameVideo();
 
     const playerRef = useRef<any>(null);
     const intervalRef = useRef<NodeJS.Timeout | number | null>(null);
-    const timeRef = useRef({ start: startTime, end: endTime });
+    const timeRef = useRef({ start: seekRequest.start, end: seekRequest.end });
+    const lastHandledSeekRequestCountRef = useRef(seekRequest.count);
 
     // Create a DOM reference to capture the video outer container element
     const containerRef = useRef<HTMLDivElement | null>(null);
 
-    // Sync the mutable ref values immediately whenever the context state shifts
+    // Handle immediate play seek changes
     useEffect(() => {
-        timeRef.current = { start: startTime, end: endTime };
-    }, [startTime, endTime]);
+        if (seekRequest.count === 0) return;
+        if (lastHandledSeekRequestCountRef.current === seekRequest.count) return;
 
-    // Handle immediate manual seek changes if the user updates numbers while paused
-    useEffect(() => {
-        if (playerRef.current) {
-            playerRef.current.seekTo(startTime, true);
+        lastHandledSeekRequestCountRef.current = seekRequest.count;
+
+        timeRef.current = {
+            start: seekRequest.start,
+            end: seekRequest.end,
+        };
+
+        if (!playerRef.current) return;
+
+        if (typeof playerRef.current.seekTo === "function") {
+            playerRef.current.seekTo(seekRequest.start, true);
         }
-    }, [seekTriggerCount]);
+
+        if (typeof playerRef.current.playVideo === "function") {
+            playerRef.current.playVideo();
+        }
+
+        // console.log("Seeking to", seekRequest.start, seekRequest.end);
+    }, [seekRequest]);
+
+    useEffect(() => {
+        if (playerRef.current && typeof playerRef.current.pauseVideo === "function") {
+            playerRef.current.pauseVideo();
+        }
+
+        stopTracking();
+    }, [pauseTriggerCount]);
 
     useEffect(() => {
         const handleOrientationChange = async () => {
@@ -85,8 +107,8 @@ export const YouTubeAPIEmbed = ({ videoId }: YouTubeAPIEmbedProps) => {
         height: '100%',
         width: '100%',
         playerVars: {
-            start: startTime, // Initial start time on the load
-            end: endTime,
+            start: seekRequest.start,
+            end: seekRequest.end,
             controls: 1,
             rel: 0,
             autoplay: 1,
