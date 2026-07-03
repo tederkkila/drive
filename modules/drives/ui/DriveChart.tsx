@@ -40,7 +40,7 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
 
     const lastAutoPlayedPlayIdRef = useRef<string | null>(null);
 
-    const [, setUrlExpandedDriveIndexes] = useQueryState(
+    const [, setUrlExpandedDriveNumbers] = useQueryState(
         "drive",
         parseAsArrayOf(parseAsInteger).withDefault([])
     );
@@ -84,7 +84,7 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
 
         if (nextExpandedDriveIds.length !== expandedDriveIds.length) {
             setExpandedDriveIds(nextExpandedDriveIds);
-            setUrlExpandedDriveIndexes(getDriveIndexesFromIds(nextExpandedDriveIds));
+            setUrlExpandedDriveNumbers(getDriveIndexesFromIds(nextExpandedDriveIds));
         }
 
         setStartTime(matchingPlay.youTubeStart);
@@ -95,7 +95,7 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
         validDrives,
         expandedDriveIds,
         setExpandedDriveIds,
-        setUrlExpandedDriveIndexes,
+        setUrlExpandedDriveNumbers,
         setStartTime,
         setEndTime,
         triggerSeek,
@@ -106,7 +106,7 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
         const driveNumbers = getDriveIndexesFromIds(ids);
 
         setExpandedDriveIds(ids);
-        setUrlExpandedDriveIds(ids.length > 0 ? driveNumbers : null);
+        setUrlExpandedDriveNumbers(ids.length > 0 ? driveNumbers : null);
     };
 
     //const { parentRef, width, height } = useParentSize({ debounceTime: 150 });
