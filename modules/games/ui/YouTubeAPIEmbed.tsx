@@ -33,10 +33,16 @@ export const YouTubeAPIEmbed = ({ videoId }: YouTubeAPIEmbedProps) => {
 
     // Handle immediate manual seek changes if the user updates numbers while paused
     useEffect(() => {
-        if (playerRef.current) {
+        if (!playerRef.current) return;
+
+        if (typeof playerRef.current.seekTo === "function") {
             playerRef.current.seekTo(startTime, true);
         }
-    }, [seekTriggerCount]);
+
+        if (typeof playerRef.current.playVideo === "function") {
+            playerRef.current.playVideo();
+        }
+    }, [seekTriggerCount, startTime]);
 
     useEffect(() => {
         if (playerRef.current && typeof playerRef.current.pauseVideo === "function") {
