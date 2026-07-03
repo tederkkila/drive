@@ -211,13 +211,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         gain: parseAsArrayOf(parseAsString).withDefault([]),
         fieldPosition: parseAsArrayOf(parseAsString).withDefault([]),
         drive: parseAsArrayOf(parseAsInteger).withDefault([]),
+        playId: parseAsString.withDefault(""),
     }
 
     const [groupStates, setGroupStates] = useQueryStates(groupParsers)
 
     const [localSearch, setLocalSearch] = useState(groupStates.search);
 
-    const { expandedDriveIds, setExpandedDriveIds } = useGameVideo();
+    const { expandedDriveIds, setExpandedDriveIds, triggerPause } = useGameVideo();
 
     const params = useParams();
     const gameId = params?.gameId as string;
@@ -284,7 +285,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         (acc, [key, value]) => {
 
             //don't count the expandedDriveIds
-            if (key === 'drive') {
+            if (key === 'drive' || key === 'playId') {
                 return acc;
             }
 
@@ -299,21 +300,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         0
     );
 
-    const isClearDisabled = totalActiveFilters === 0
+    const hasSelectedPlay = groupStates.playId.trim() !== "";
+    const isClearDisabled = totalActiveFilters === 0 && !hasSelectedPlay
 
     const handleClearAllGroups = () => {
+
+        const shouldPauseVideo = groupStates.playId.trim() !== "";
+
         const clearedState = Object.keys(groupParsers).reduce((acc, key) => {
 
-            //don't clear the expandedDriveIds'
+            // don't clear expanded drives
             if (key === "drive") {
                 return acc;
             }
 
             acc[key as keyof typeof groupParsers] = null
             return acc
-        }, {} as Record<keyof typeof groupParsers, null>)
+        }, {} as Partial<Record<keyof typeof groupParsers, null>>)
 
         setGroupStates(clearedState)
+
+        if (shouldPauseVideo) {
+            triggerPause();
+        }
     }
 
     const handleGroupChange = (groupKey: keyof typeof groupParsers, title: string, checked: boolean) => {

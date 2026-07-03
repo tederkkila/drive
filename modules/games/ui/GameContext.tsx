@@ -11,6 +11,8 @@ export type GameContextValue = {
     setEndTime: React.Dispatch<React.SetStateAction<number>>;
     triggerSeek: () => void;      // New action to force a jump
     seekTriggerCount: number;     // Observable dependency item
+    triggerPause: () => void;
+    pauseTriggerCount: number;
     expandedDriveIds: string[];
     setExpandedDriveIds: React.Dispatch<React.SetStateAction<string[]>>;
 };
@@ -22,6 +24,7 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
     const [startTime, setStartTime] = useState<number>(0);
     const [endTime, setEndTime] = useState<number>(3600);
     const [seekTriggerCount, setSeekTriggerCount] = useState<number>(0);
+    const [pauseTriggerCount, setPauseTriggerCount] = useState<number>(0);
     const [expandedDriveIdsState, setExpandedDriveIdsState] = useState<string[]>([]);
 
     const setExpandedDriveIds: React.Dispatch<React.SetStateAction<string[]>> = useCallback((value) => {
@@ -40,6 +43,10 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
         setSeekTriggerCount(prev => prev + 1);
     }, []);
 
+    const triggerPause = useCallback(() => {
+        setPauseTriggerCount(prev => prev + 1);
+    }, []);
+
     const value = useMemo(() => ({
         videoId,
         setVideoId,
@@ -49,6 +56,8 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
         setEndTime,
         triggerSeek,
         seekTriggerCount,
+        triggerPause,
+        pauseTriggerCount,
         expandedDriveIds: expandedDriveIdsState,
         setExpandedDriveIds
     }), [
@@ -57,6 +66,8 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
         endTime,
         triggerSeek,
         seekTriggerCount,
+        triggerPause,
+        pauseTriggerCount,
         expandedDriveIdsState,
         setExpandedDriveIds
     ]);

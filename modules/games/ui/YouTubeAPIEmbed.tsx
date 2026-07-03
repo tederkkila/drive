@@ -17,7 +17,7 @@ interface YouTubeAPIEmbedProps {
 
 export const YouTubeAPIEmbed = ({ videoId }: YouTubeAPIEmbedProps) => {
 
-    const { startTime, endTime, seekTriggerCount, } = useGameVideo();
+    const { startTime, endTime, seekTriggerCount, pauseTriggerCount } = useGameVideo();
 
     const playerRef = useRef<any>(null);
     const intervalRef = useRef<NodeJS.Timeout | number | null>(null);
@@ -37,6 +37,14 @@ export const YouTubeAPIEmbed = ({ videoId }: YouTubeAPIEmbedProps) => {
             playerRef.current.seekTo(startTime, true);
         }
     }, [seekTriggerCount]);
+
+    useEffect(() => {
+        if (playerRef.current && typeof playerRef.current.pauseVideo === "function") {
+            playerRef.current.pauseVideo();
+        }
+
+        stopTracking();
+    }, [pauseTriggerCount]);
 
     useEffect(() => {
         const handleOrientationChange = async () => {
