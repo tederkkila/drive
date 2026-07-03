@@ -313,6 +313,16 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
     const [filters, _setFilters] = useQueryStates(groupParsers);
     const [playId, setUrlPlayId] = useQueryState("playId", parseAsString.withDefault(""));
 
+    const filtersKey = [
+        filters.search,
+        filters.playType.join(","),
+        filters.down.join(","),
+        filters.distance.join(","),
+        filters.hash.join(","),
+        filters.gain.join(","),
+        filters.fieldPosition.join(","),
+    ].join("|");
+
     if (!drive.plays) return null;
     if (width === 0) return null;
     if (height === 0) return null;
@@ -332,18 +342,21 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
         return xScale(x+10);
     }
 
-    const { setStartTime, setEndTime, triggerSeek } = useGameVideo();
+    const { triggerSeekTo } = useGameVideo();
 
     const handleClick = useCallback((play: Play) => {
+        if (!play.id) return;
+
+        if (play.id === playId) {
+            triggerSeekTo(play.youTubeStart, play.youTubeEnd);
+            return;
+        }
+
         setUrlPlayId(play.id);
-        setStartTime(play.youTubeStart);
-        setEndTime(play.youTubeEnd);
-        triggerSeek();
     }, [
+        playId,
         setUrlPlayId,
-        setStartTime,
-        setEndTime,
-        triggerSeek,
+        triggerSeekTo,
     ]);
 
     function getOrdinal(n: number): string {
@@ -375,7 +388,9 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                 {drive.plays.map((play, index) => {
 
                     const selectedPlay = play.id == playId;
-                    console.log("selectedPlay", selectedPlay)
+                    if (selectedPlay) {
+                        console.log("selectedPlay", selectedPlay)
+                    }
 
                     const startSpotAbsolute = getAbsolutePosition(play.startFieldPosition, drive.direction)
                     let endSpotAbsolute = getAbsolutePosition(play.endFieldPosition, drive.direction)
@@ -649,7 +664,7 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                 </Group>
             </svg>
         );
-    }, [width, height, drive, playId, drive.plays, filters, handleClick]);
+    }, [width, height, drive.id, drive.direction, drive.plays, playId, filtersKey, handleClick]);
 
     return (
         <div>

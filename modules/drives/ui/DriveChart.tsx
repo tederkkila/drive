@@ -33,9 +33,7 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
     const {
         expandedDriveIds,
         setExpandedDriveIds,
-        setStartTime,
-        setEndTime,
-        triggerSeek,
+        triggerSeekTo,
     } = useGameVideo();
 
     const lastAutoPlayedPlayIdRef = useRef<string | null>(null);
@@ -87,18 +85,14 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
             setUrlExpandedDriveNumbers(getDriveNumbersFromIds(nextExpandedDriveIds));
         }
 
-        setStartTime(matchingPlay.youTubeStart);
-        setEndTime(matchingPlay.youTubeEnd);
-        triggerSeek();
+        triggerSeekTo(matchingPlay.youTubeStart, matchingPlay.youTubeEnd);
     }, [
         urlPlayId,
         validDrives,
         expandedDriveIds,
         setExpandedDriveIds,
         setUrlExpandedDriveNumbers,
-        setStartTime,
-        setEndTime,
-        triggerSeek,
+        triggerSeekTo,
     ]);
 
 
