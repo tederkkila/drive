@@ -17,12 +17,45 @@ const ensureGameHasPopulatedTeams = (game: Game): GameWithTeams => {
 };
 
 export const gamesRouter = createTRPCRouter({
+    getDriveListForGame: baseProcedure
+        .input(z.object({
+            gameId: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+
+            //console.time("games.getDriveListForGame total");
+            //console.time("drives query");
+            const drivesData = await ctx.db.find({
+                collection: "drives",
+                depth: 0,
+                where: {
+                    game: {
+                        equals: input.gameId,
+                    },
+                },
+                sort: "driveNumber",
+                limit: 100,
+                pagination: false,
+                select: {
+                    id: true,
+                    driveNumber: true,
+                },
+            });
+            //console.timeEnd("drives query");
+
+            return drivesData.docs.map((drive) => ({
+                id: drive.id,
+                driveNumber: drive.driveNumber,
+            }));
+        }),
     getGameWithDrives:baseProcedure
         .input(z.object({
             gameId: z.string(),
         }),)
         .query(async ({ctx, input}) => {
 
+            //console.time("games.getGameWithDrives total");
+            //console.time("games query");
             const gamesData = await ctx.db.find({
                 collection: "games",
                 depth: 1,
@@ -34,6 +67,7 @@ export const gamesRouter = createTRPCRouter({
                 limit: 1,
                 pagination: false,
             });
+            //console.timeEnd("games query");
 
             const game: Game = gamesData.docs[0];
             //console.log("game.name: " + game.name)
@@ -44,9 +78,10 @@ export const gamesRouter = createTRPCRouter({
 
             const gameWithTeams = ensureGameHasPopulatedTeams(game);
 
+            //console.time("drives query");
             const drivesData = await ctx.db.find({
                 collection: "drives",
-                depth: 2,
+                depth: 1,
                 where: {
                     game: {
                         equals: input.gameId,
@@ -56,6 +91,10 @@ export const gamesRouter = createTRPCRouter({
                 limit: 100,
                 pagination: false,
             });
+
+            //console.timeEnd("drives query");
+
+            //console.timeEnd("games.getGameWithDrives total");
 
             //console.log("drivesData: ", drivesData)
 

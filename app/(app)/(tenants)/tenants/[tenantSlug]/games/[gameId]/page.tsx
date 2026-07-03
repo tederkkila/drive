@@ -34,6 +34,12 @@ const Page = async ({ params }: Props) => {
     const game = await caller.games.getOne({ gameId });
 
     prefetch(
+        trpc.games.getDriveListForGame.queryOptions({
+            gameId: gameId,
+        })
+    );
+
+    prefetch(
         trpc.games.getGameWithDrives.queryOptions({
             gameId: gameId,
         })
@@ -41,8 +47,11 @@ const Page = async ({ params }: Props) => {
 
     return (
         <GameProvider>
+            <HydrateClient>
             <SidebarProvider>
-                <AppSidebar />
+                <ErrorBoundary fallback={<div>Error with sidebar</div>}>
+                    <AppSidebar gameId={gameId} />
+                </ErrorBoundary>
                 <SidebarInset className="h-screen w-full flex flex-col overflow-hidden">
                     <header className="sticky top-0 flex h-8 shrink-0 items-center gap-2 border-b bg-background px-4">
                         <SidebarTrigger className="-ml-1" />
@@ -66,16 +75,17 @@ const Page = async ({ params }: Props) => {
                     </header>
                     <div className="flex-1 flex flex-col overflow-hidden bg-gray-100">
 
-                        <HydrateClient>
+                        {/*<HydrateClient>*/}
                             <ErrorBoundary fallback={<div>Something went wrong</div>}>
                                 <Suspense fallback={<div>GameView Loading...</div>}>
                                     <GameViewClient gameId={ gameId } />
                                 </Suspense>
                             </ErrorBoundary>
-                        </HydrateClient>
+                        {/*</HydrateClient>*/}
                     </div>
                 </SidebarInset>
             </SidebarProvider>
+        </HydrateClient>
         </GameProvider>
     )
 }
