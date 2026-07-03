@@ -9,7 +9,7 @@ import {
 import { DriveChartGraphic, DriveChartTriggerGraphic } from "@/modules/drives/ui/visx/DriveChartGraphic";
 import { ParentSize, /*useParentSize*/ } from "@visx/responsive";
 import { useGameVideo } from "@/modules/games/ui/GameContext";
-import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
+import { parseAsArrayOf, parseAsInteger, parseAsString, useQueryState } from "nuqs";
 
 function hasPopulatedPossessingTeam(
     drive: Drive,
@@ -40,9 +40,9 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
 
     const lastAutoPlayedPlayIdRef = useRef<string | null>(null);
 
-    const [, setUrlExpandedDriveIds] = useQueryState(
-        "expandedDriveIds",
-        parseAsArrayOf(parseAsString).withDefault([])
+    const [, setUrlExpandedDriveIndexes] = useQueryState(
+        "drive",
+        parseAsArrayOf(parseAsInteger).withDefault([])
     );
 
     const [urlPlayId] = useQueryState(
@@ -55,6 +55,13 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
     )
 
     const validDrives = drives.filter(hasPopulatedPossessingTeam);
+    const driveIds = validDrives.map((drive) => drive.id);
+
+    const getDriveIndexesFromIds = (ids: string[]) => {
+        return ids
+            .map((id) => driveIds.indexOf(id))
+            .filter((index) => index !== -1);
+    };
 
     useEffect(() => {
         if (!urlPlayId) return;
@@ -76,7 +83,7 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
 
         if (nextExpandedDriveIds.length !== expandedDriveIds.length) {
             setExpandedDriveIds(nextExpandedDriveIds);
-            setUrlExpandedDriveIds(nextExpandedDriveIds);
+            setUrlExpandedDriveIndexes(getDriveIndexesFromIds(nextExpandedDriveIds));
         }
 
         setStartTime(matchingPlay.youTubeStart);
@@ -87,7 +94,7 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
         validDrives,
         expandedDriveIds,
         setExpandedDriveIds,
-        setUrlExpandedDriveIds,
+        setUrlExpandedDriveIndexes,
         setStartTime,
         setEndTime,
         triggerSeek,
@@ -95,6 +102,8 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
 
 
     const handleExpandedDriveIdsChange = (ids: string[]) => {
+        const indexes = getDriveIndexesFromIds(ids);
+
         setExpandedDriveIds(ids);
         setUrlExpandedDriveIds(ids.length > 0 ? ids : null);
     };
