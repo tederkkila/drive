@@ -232,7 +232,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     const urlExpandedDriveIndexes = groupStates.drive;
     const urlExpandedDriveIds = urlExpandedDriveIndexes
-        .map((index) => driveIds[index])
+        .map((driveNumber) => driveIds[driveNumber - 1])
         .filter(Boolean);
 
     const expandedDriveIdsKey = expandedDriveIds.join(",");
@@ -260,8 +260,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             setExpandedDriveIds([]);
             setGroupStates({ drive: null });
         } else {
+            const allDriveNumbers = driveIds.map((_, index) => index + 1);
             setExpandedDriveIds(driveIds);
-            setGroupStates({ drive: driveIds });
+            setGroupStates({ drive: allDriveNumbers });
         }
     };
 

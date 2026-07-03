@@ -60,7 +60,8 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
     const getDriveIndexesFromIds = (ids: string[]) => {
         return ids
             .map((id) => driveIds.indexOf(id))
-            .filter((index) => index !== -1);
+            .filter((index) => index !== -1)
+            .map((index) => index + 1);
     };
 
     useEffect(() => {
@@ -102,10 +103,10 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
 
 
     const handleExpandedDriveIdsChange = (ids: string[]) => {
-        const indexes = getDriveIndexesFromIds(ids);
+        const driveNumbers = getDriveIndexesFromIds(ids);
 
         setExpandedDriveIds(ids);
-        setUrlExpandedDriveIds(ids.length > 0 ? ids : null);
+        setUrlExpandedDriveIds(ids.length > 0 ? driveNumbers : null);
     };
 
     //const { parentRef, width, height } = useParentSize({ debounceTime: 150 });
