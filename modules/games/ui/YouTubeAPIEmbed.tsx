@@ -49,7 +49,7 @@ export const YouTubeAPIEmbed = ({ videoId }: YouTubeAPIEmbedProps) => {
             playerRef.current.playVideo();
         }
 
-        console.log("Seeking to", seekRequest.start, seekRequest.end);
+        // console.log("Seeking to", seekRequest.start, seekRequest.end);
     }, [seekRequest]);
 
     useEffect(() => {

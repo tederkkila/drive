@@ -387,9 +387,9 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                 {drive.plays.map((play, index) => {
 
                     const selectedPlay = play.id == playId;
-                    if (selectedPlay) {
-                        console.log("selectedPlay", selectedPlay)
-                    }
+                    // if (selectedPlay) {
+                    //     console.log("selectedPlay", selectedPlay)
+                    // }
 
                     const startSpotAbsolute = getAbsolutePosition(play.startFieldPosition, drive.direction)
                     let endSpotAbsolute = getAbsolutePosition(play.endFieldPosition, drive.direction)
