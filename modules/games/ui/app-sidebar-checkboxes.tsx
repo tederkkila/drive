@@ -27,7 +27,6 @@ import { useQueryStates, parseAsArrayOf, parseAsInteger, parseAsString, debounce
 import { Trash2, ChevronDown, ChevronUp } from "lucide-react"
 import { Label } from "@/components/ui/label";
 import { useGameVideo } from "@/modules/games/ui/GameContext";
-import { useParams } from "next/navigation";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 
@@ -194,7 +193,11 @@ const data = {
     ],
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+    gameId: string;
+}
+
+export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
 
     const groupParsers = {
         search: parseAsString
@@ -217,18 +220,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const [groupStates, setGroupStates] = useQueryStates(groupParsers)
 
     const [localSearch, setLocalSearch] = useState(groupStates.search);
+    const [hasMounted, setHasMounted] = useState(false);
 
     const { expandedDriveIds, setExpandedDriveIds, triggerPause } = useGameVideo();
 
-    const params = useParams();
-    const gameId = params?.gameId as string;
     const trpc = useTRPC();
 
-    const { data: gameData } = useQuery(
-        trpc.games.getGameWithDrives.queryOptions({ gameId }, { enabled: !!gameId })
+    const { data: driveList = [], isLoading } = useQuery(
+            trpc.games.getDriveListForGame.queryOptions(
+                { gameId },
+                { enabled: !!gameId }
+            )
     );
 
-    const driveIds = gameData?.drives?.map(drive => drive.id) ?? [];
+    const driveIds = driveList.map((drive) => drive.id);
     const allExpanded = driveIds.length > 0 && expandedDriveIds.length === driveIds.length;
 
     const urlExpandedDriveIndexes = groupStates.drive;
@@ -238,6 +243,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     const expandedDriveIdsKey = expandedDriveIds.join(",");
     const urlExpandedDriveIdsKey = urlExpandedDriveIds.join(",");
+
+    useEffect(() => {
+        setHasMounted(true);
+    }, []);
 
     useEffect(() => {
         if (driveIds.length === 0) return;
@@ -358,8 +367,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             size="sm"
                             className="w-full justify-start gap-2 text-xs"
                             onClick={toggleAllDrives}
-                            disabled={driveIds.length === 0}
-                        >
+                            disabled={!hasMounted || isLoading || driveIds.length === 0}                        >
                             {allExpanded ? (
                                 <>
                                     <ChevronUp className="h-3.5 w-3.5" />
