@@ -347,12 +347,11 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
     const handleClick = useCallback((play: Play) => {
         if (!play.id) return;
 
-        if (play.id === playId) {
-            triggerSeekTo(play.youTubeStart, play.youTubeEnd);
-            return;
-        }
+        triggerSeekTo(play.youTubeStart, play.youTubeEnd);
 
-        setUrlPlayId(play.id);
+        if (play.id !== playId) {
+            setUrlPlayId(play.id);
+        }
     }, [
         playId,
         setUrlPlayId,

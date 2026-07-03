@@ -37,6 +37,7 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
     } = useGameVideo();
 
     const lastAutoPlayedPlayIdRef = useRef<string | null>(null);
+    const hasHandledInitialPlayIdRef = useRef(false);
 
     const [, setUrlExpandedDriveNumbers] = useQueryState(
         "drive",
@@ -63,6 +64,11 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
     };
 
     useEffect(() => {
+        if (hasHandledInitialPlayIdRef.current) return;
+        if (validDrives.length === 0) return;
+
+        hasHandledInitialPlayIdRef.current = true;
+
         if (!urlPlayId) return;
         if (lastAutoPlayedPlayIdRef.current === urlPlayId) return;
 
