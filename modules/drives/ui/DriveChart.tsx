@@ -57,7 +57,7 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
     const validDrives = drives.filter(hasPopulatedPossessingTeam);
     const driveIds = validDrives.map((drive) => drive.id);
 
-    const getDriveIndexesFromIds = (ids: string[]) => {
+    const getDriveNumbersFromIds = (ids: string[]) => {
         return ids
             .map((id) => driveIds.indexOf(id))
             .filter((index) => index !== -1)
@@ -84,7 +84,7 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
 
         if (nextExpandedDriveIds.length !== expandedDriveIds.length) {
             setExpandedDriveIds(nextExpandedDriveIds);
-            setUrlExpandedDriveNumbers(getDriveIndexesFromIds(nextExpandedDriveIds));
+            setUrlExpandedDriveNumbers(getDriveNumbersFromIds(nextExpandedDriveIds));
         }
 
         setStartTime(matchingPlay.youTubeStart);
@@ -103,7 +103,7 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
 
 
     const handleExpandedDriveIdsChange = (ids: string[]) => {
-        const driveNumbers = getDriveIndexesFromIds(ids);
+        const driveNumbers = getDriveNumbersFromIds(ids);
 
         setExpandedDriveIds(ids);
         setUrlExpandedDriveNumbers(ids.length > 0 ? driveNumbers : null);
