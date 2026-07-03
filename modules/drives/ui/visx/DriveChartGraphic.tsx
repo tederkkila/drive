@@ -311,7 +311,7 @@ interface DriveChartGraphicProps {
 export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicProps) => {
 
     const [filters, _setFilters] = useQueryStates(groupParsers);
-    const [, setUrlPlayId] = useQueryState("playId", parseAsString.withDefault(""));
+    const [playId, setUrlPlayId] = useQueryState("playId", parseAsString.withDefault(""));
 
     if (!drive.plays) return null;
     if (width === 0) return null;
@@ -373,6 +373,9 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                 <Group top={0} left={0}>
 
                 {drive.plays.map((play, index) => {
+
+                    const selectedPlay = play.id == playId;
+                    console.log("selectedPlay", selectedPlay)
 
                     const startSpotAbsolute = getAbsolutePosition(play.startFieldPosition, drive.direction)
                     let endSpotAbsolute = getAbsolutePosition(play.endFieldPosition, drive.direction)
@@ -635,6 +638,10 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                                   onClick={() => handleClick(play)}
                                   style={{ cursor: 'pointer' }}
                             />
+
+                            {selectedPlay &&
+                                <rect x={0} y={2} width={5} height={playHeight-4} fill={"orange"} fillOpacity={0.5}  />
+                            }
                         </Group>
                     )
                 })}
@@ -642,7 +649,7 @@ export const DriveChartGraphic = ({ drive, width, height }: DriveChartGraphicPro
                 </Group>
             </svg>
         );
-    }, [width, height, drive, drive.plays, filters, handleClick]);
+    }, [width, height, drive, playId, drive.plays, filters, handleClick]);
 
     return (
         <div>
