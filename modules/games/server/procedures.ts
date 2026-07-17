@@ -17,6 +17,47 @@ const ensureGameHasPopulatedTeams = (game: Game): GameWithTeams => {
 };
 
 export const gamesRouter = createTRPCRouter({
+    createGame: baseProcedure
+        .input(z.object({
+            tenants: z.array(z.string()).min(1, "At least one tenant is required"),
+            name: z.string().min(1, "Game name is required"),
+            slug: z.string().min(1, "Slug is required"),
+            date: z.string().min(1, "Date is required"),
+            homeTeam: z.string().min(1, "Home team is required"),
+            awayTeam: z.string().min(1, "Away team is required"),
+            homeScore: z.number().default(0),
+            awayScore: z.number().default(0),
+            videoId: z.string().min(1, "Video ID is required"),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            console.log("input: ", input)
+
+            // Extract the single tenant ID from your incoming array
+            // The multi-tenant plugin typically expects a single string ID, not an array
+            const singleTenantId = input.tenants[0];
+
+            const newGame = await ctx.db.create({
+                collection: "games",
+                data: {
+                    // 1. Your manual schema field (expects the array)
+                    tenants: input.tenants,
+
+                    // 2. The Multi-Tenant Plugin's injected fields
+                    tenant: singleTenantId,
+
+                    name: input.name,
+                    slug: input.slug,
+                    date: input.date,
+                    homeTeam: input.homeTeam,
+                    awayTeam: input.awayTeam,
+                    homeScore: input.homeScore,
+                    awayScore: input.awayScore,
+                    videoId: input.videoId,
+                },
+            });
+
+            return newGame;
+        }),
     getDriveListForGame: baseProcedure
         .input(z.object({
             gameId: z.string(),
