@@ -19,22 +19,19 @@ interface Props {
 const Page = async ({ params }: Props) => {
     const { tenantSlug } = await params;
 
-    // Get tenant data to extract tenant ID
-    const tenant = await caller.tenants.getOne({ tenantSlug });
-
     return (
         <div className="container mx-auto py-8">
             <div className="mb-6">
                 <Breadcrumb>
                     <BreadcrumbList>
                         <BreadcrumbItem>
-                            <BreadcrumbLink href={`/tenants/${tenantSlug}`}>
+                            <BreadcrumbLink href={`/`}>
                                 {tenantSlug}
                             </BreadcrumbLink>
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <BreadcrumbLink href={`/tenants/${tenantSlug}/games`}>
+                            <BreadcrumbLink href={`/games`}>
                                 Games
                             </BreadcrumbLink>
                         </BreadcrumbItem>
