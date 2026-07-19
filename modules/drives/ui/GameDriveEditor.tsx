@@ -100,11 +100,11 @@ const createEmptyPlay = (playNumber: number): EditablePlay => ({
 });
 
 function TimePickerYouTube({
-                               videoId,
-                               time,
-                               label,
-                               onPickTime,
-                           }: {
+   videoId,
+   time,
+   label,
+   onPickTime,
+}: {
     videoId: string;
     time: number;
     label: string;
@@ -115,6 +115,7 @@ function TimePickerYouTube({
     const [isPlayerReady, setIsPlayerReady] = useState(false);
 
     const normalizedTime = Number.isFinite(time) ? Math.max(0, time) : 0;
+    console.log("normalizedTime", normalizedTime);
 
     const opts: YouTubeProps["opts"] = {
         width: "100%",
@@ -124,6 +125,7 @@ function TimePickerYouTube({
             rel: 0,
             playsinline: 1,
             disablekb: 0,
+            // start: Math.floor(normalizedTime),
         },
     };
 
@@ -164,9 +166,16 @@ function TimePickerYouTube({
         }
 
         clearPauseTimeout();
+        console.log("seekPlayerToTime", targetTime);
 
         try {
-        player.seekTo(targetTime, true);
+            const safeTargetTime = Math.max(0, Math.floor(targetTime));
+
+            player.seekTo(safeTargetTime, true);
+
+            if (typeof player.playVideo === "function") {
+                player.playVideo();
+            }
 
             pauseTimeoutRef.current = window.setTimeout(() => {
                 const safePlayer = getSafePlayer();
@@ -174,20 +183,27 @@ function TimePickerYouTube({
                 if (safePlayer && typeof safePlayer.pauseVideo === "function") {
                     safePlayer.pauseVideo();
             }
-            }, 250);
+            }, 350);
         } catch {
             // The YouTube iframe can briefly be unavailable while React is rendering/remounting.
             // Ignoring this prevents a transient iframe state from crashing the editor.
+
         }
     };
 
     const handleReady: YouTubeProps["onReady"] = (event) => {
-        playerRef.current = event.target;
+        const player = event.target as unknown as YT.Player;
+
+        if (!player || typeof player.seekTo !== "function") {
+            return;
+        }
+
+        playerRef.current = player;
         setIsPlayerReady(true);
 
         window.setTimeout(() => {
-        seekPlayerToTime(normalizedTime);
-        }, 250);
+            seekPlayerToTime(normalizedTime);
+        }, 500);
     };
 
     useEffect(() => {
@@ -196,7 +212,7 @@ function TimePickerYouTube({
         }
 
         const timeoutId = window.setTimeout(() => {
-        seekPlayerToTime(normalizedTime);
+            seekPlayerToTime(normalizedTime);
         }, 100);
 
         return () => {
@@ -210,6 +226,11 @@ function TimePickerYouTube({
             playerRef.current = null;
         };
     }, []);
+
+    useEffect(() => {
+        setIsPlayerReady(false);
+        playerRef.current = null;
+    }, [videoId]);
 
     const pickCurrentTime = async () => {
         const player = getSafePlayer();
@@ -234,7 +255,12 @@ function TimePickerYouTube({
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-                <YouTube videoId={videoId} opts={opts} onReady={handleReady} />
+                <YouTube
+                    // key={`${videoId}-${Math.floor(normalizedTime)}`}
+                    videoId={videoId}
+                    opts={opts}
+                    onReady={handleReady}
+                />
                 <Button type="button" variant="outline" onClick={pickCurrentTime}>
                     Use current time
                 </Button>

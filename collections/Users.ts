@@ -25,7 +25,7 @@ export const Users: CollectionConfig = {
   auth: {
     cookies: {
       domain: process.env.PAYLOAD_COOKIE_DOMAIN || undefined,
-      sameSite: "lax",
+      sameSite: "Lax",
       secure: process.env.NODE_ENV === "production",
     },
   },

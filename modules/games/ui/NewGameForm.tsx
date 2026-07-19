@@ -38,8 +38,8 @@ const gameFormSchema = z.object({
     date: z.string().min(1, "Date is required"),
     homeTeam: z.string().min(1, "Home team is required"),
     awayTeam: z.string().min(1, "Away team is required"),
-    homeScore: z.number().min(0).default(0),
-    awayScore: z.number().min(0).default(0),
+    homeScore: z.number().min(0),
+    awayScore: z.number().min(0),
     videoId: z.string().min(1, "Video ID is required"),
 });
 
@@ -71,7 +71,7 @@ export function NewGameForm({ tenantSlug }: NewGameFormProps) {
 
     const createGame = useMutation(createGameOptions)
 
-    const form = useForm<GameFormValues>({
+    const form = useForm<z.input<typeof gameFormSchema>>({
         resolver: zodResolver(gameFormSchema),
         defaultValues: {
         name: "",
@@ -85,7 +85,7 @@ export function NewGameForm({ tenantSlug }: NewGameFormProps) {
         },
     });
 
-    const onSubmit = async (values: GameFormValues) => {
+    const onSubmit = async (values: z.infer<typeof gameFormSchema>) => {
         if (!tenant) {
             toast.error("Tenant not found");
             return;
