@@ -56,8 +56,13 @@ export const gamesRouter = createTRPCRouter({
                 },
             });
 
+            if (!newGame) {
+                throw new TRPCError({ code: "NOT_FOUND", message: "New Game not created" });
+            }
+
             return newGame;
         }),
+
     getDriveListForGame: baseProcedure
         .input(z.object({
             gameId: z.string(),

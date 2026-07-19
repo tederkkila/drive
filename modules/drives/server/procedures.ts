@@ -86,24 +86,41 @@ export const drivesRouter = createTRPCRouter({
 
             console.log("input: ", input)
 
-            const existingDrives = await ctx.db.find({
-                collection: "drives",
-                depth: 0,
-                where: {
-                    game: {
-                        equals: input.gameId,
-                    },
-                },
-                sort: "-driveNumber",
-                limit: 1,
-                pagination: false,
-                select: {
-                    driveNumber: true,
-                },
-            });
+            let existingDrives;
 
-            const lastDriveNumber = existingDrives.docs[0]?.driveNumber ?? 0;
-            const nextDriveNumber = lastDriveNumber + 1;
+            try {
+                existingDrives = await ctx.db.find({
+                    collection: "drives",
+                    depth: 0,
+                    where: {
+                        game: {
+                            equals: input.gameId,
+                        },
+                    },
+                    sort: "-driveNumber",
+                    limit: 1,
+                    pagination: false,
+                    select: {
+                        driveNumber: true,
+                    },
+                });
+            } catch {
+                throw new TRPCError({
+                    code: "INTERNAL_SERVER_ERROR",
+                    message: "Failed to load existing drives.",
+                });
+            }
+
+            const lastDriveNumber = existingDrives.docs[0]?.driveNumber;
+
+            if (lastDriveNumber !== undefined && !Number.isFinite(lastDriveNumber)) {
+                throw new TRPCError({
+                    code: "INTERNAL_SERVER_ERROR",
+                    message: "Invalid drive number found.",
+                });
+            }
+
+            const nextDriveNumber = (lastDriveNumber ?? 0) + 1;
 
             // console.log("lastDriveNumber: ", lastDriveNumber)
             // console.log("nextDriveNumber: ", nextDriveNumber)

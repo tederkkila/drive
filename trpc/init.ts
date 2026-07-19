@@ -47,17 +47,19 @@ export const baseProcedure = t.procedure.use(async ({ next }) => {
 });
 
 export const adminProcedure = t.procedure.use(async ({ ctx, next }) => {
-    if (!ctx.user) {
+    const user = ctx.user;
+
+    if (!user) {
         throw new TRPCError({
             code: "UNAUTHORIZED",
-            message: "You must be signed in with a Payload admin account to perform this action.",
+            message: "Authentication required.",
         });
     }
 
     return next({
         ctx: {
             ...ctx,
-            user: ctx.user,
+            user,
         },
     });
 });

@@ -1,3 +1,4 @@
+import React from "react"
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -12,6 +13,7 @@ import { GameWithTeams } from "@/modules/games/games";
 
 interface GameCardProps {
     game: GameWithTeams;
+    key?: React.Key;
 }
 
 export const GameCard = ({ game }: GameCardProps) => {

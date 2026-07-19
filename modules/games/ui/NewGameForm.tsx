@@ -54,7 +54,7 @@ export function NewGameForm({ tenantSlug }: NewGameFormProps) {
     const trpc = useTRPC();
 
     const { data: tenant } = useQuery(trpc.tenants.getOne.queryOptions({ tenantSlug }));
-    const { data: teamsData } = useQuery(trpc.teams.getAll.queryOptions());
+    const { data: teamsData } = useQuery(trpc.teams.getAll.queryOptions({ tenantSlug }));
 
     console.log("tenant", tenant)
     console.log("teamsData", teamsData)
