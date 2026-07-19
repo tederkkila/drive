@@ -1,5 +1,4 @@
 import React from "react";
-import { caller } from "@/trpc/server";
 import { NewGameForm } from "@/modules/games/ui/NewGameForm";
 import {
     Breadcrumb,
@@ -9,6 +8,7 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { requirePayloadAuth } from "@/lib/require-payload-auth";
 
 interface Props {
     params: Promise<{
@@ -17,6 +17,8 @@ interface Props {
 }
 
 const Page = async ({ params }: Props) => {
+    await requirePayloadAuth();
+
     const { tenantSlug } = await params;
 
     return (

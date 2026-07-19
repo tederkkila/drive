@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { Drive, Game } from "@/payload-types";
 import { GameWithTeamsWithDrives, GameWithTeams } from "@/modules/games/games"
 
-import { baseProcedure, createTRPCRouter } from "@/trpc/init";
+import { adminProcedure, baseProcedure, createTRPCRouter } from "@/trpc/init";
 
 const ensureGameHasPopulatedTeams = (game: Game): GameWithTeams => {
     if (typeof game.homeTeam === "string" || typeof game.awayTeam === "string") {
@@ -17,7 +17,7 @@ const ensureGameHasPopulatedTeams = (game: Game): GameWithTeams => {
 };
 
 export const gamesRouter = createTRPCRouter({
-    createGame: baseProcedure
+    createGame: adminProcedure
         .input(z.object({
             tenants: z.array(z.string()).min(1, "At least one tenant is required"),
             name: z.string().min(1, "Game name is required"),

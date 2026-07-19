@@ -19,8 +19,6 @@ export const GameList = ({ tenantSlug }: GameListProps) => {
         }
     ));
 
-    //console.log("data", data)
-
     if (data.docs?.length === 0) {
         return (
             <div className="border border-black border-dashed flex items-center justify-center p-8 flex-col gap-y-4 bg-white w-full rounded-lg">

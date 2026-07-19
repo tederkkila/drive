@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { GameDriveEditor } from "@/modules/drives/ui/GameDriveEditor";
+import { requirePayloadAuth } from "@/lib/require-payload-auth";
 
 interface Props {
     params: Promise<{
@@ -20,6 +22,8 @@ interface Props {
 }
 
 const Page = async ({ params }: Props) => {
+    await requirePayloadAuth();
+
     const { tenantSlug, gameId } = await params;
 
     const game = await caller.games.getOne({ gameId });
@@ -69,20 +73,7 @@ const Page = async ({ params }: Props) => {
                 <HydrateClient>
                     <ErrorBoundary fallback={<div>Error loading drives</div>}>
                         <Suspense fallback={<div>Loading drives...</div>}>
-                            {/* Drive management component will go here */}
-                            <div className="space-y-4">
-                                <div className="flex gap-4">
-                                    <Button>Add New Drive</Button>
-                                </div>
-
-                                {/* Placeholder for drive list */}
-                                <div className="rounded-lg border p-4 bg-muted/50">
-                                    <p className="text-sm text-muted-foreground">
-                                        Drive management interface coming soon.
-                                        You can add functionality to create and edit drives here.
-                                    </p>
-                                </div>
-                            </div>
+                            <GameDriveEditor game={game} tenantSlug={tenantSlug} />
                         </Suspense>
                     </ErrorBoundary>
                 </HydrateClient>
