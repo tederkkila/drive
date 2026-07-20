@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import YouTube, { YouTubeProps } from "react-youtube";
+import React, { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
@@ -24,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import type { Drive, Game } from "@/payload-types";
+import { TimePickerYouTube } from "@/modules/drives/ui/TimePickerYouTube";
 
 type DriveDirection = "left" | "right";
 
@@ -99,177 +99,10 @@ const createEmptyPlay = (playNumber: number): EditablePlay => ({
     nullifyPlay: false,
 });
 
-function TimePickerYouTube({
-   videoId,
-   time,
-   label,
-   onPickTime,
-}: {
-    videoId: string;
-    time: number;
-    label: string;
-    onPickTime: (time: number) => void;
-}) {
-    const playerRef = useRef<YT.Player | null>(null);
-    const pauseTimeoutRef = useRef<number | null>(null);
-    const [isPlayerReady, setIsPlayerReady] = useState(false);
 
-    const normalizedTime = Number.isFinite(time) ? Math.max(0, time) : 0;
-    console.log("normalizedTime", normalizedTime);
-
-    const opts: YouTubeProps["opts"] = {
-        width: "100%",
-        height: "360",
-        playerVars: {
-            controls: 1,
-            rel: 0,
-            playsinline: 1,
-            disablekb: 0,
-            // start: Math.floor(normalizedTime),
-        },
-    };
-
-    const clearPauseTimeout = () => {
-        if (pauseTimeoutRef.current !== null) {
-            window.clearTimeout(pauseTimeoutRef.current);
-            pauseTimeoutRef.current = null;
-        }
-    };
-
-    const getSafePlayer = () => {
-        const player = playerRef.current;
-
-        if (!player || typeof player.seekTo !== "function") {
-            return null;
-        }
-
-        try {
-            const iframe = typeof player.getIframe === "function"
-                ? player.getIframe()
-                : null;
-
-            if (!iframe || !iframe.src) {
-                return null;
-            }
-
-            return player;
-        } catch {
-            return null;
-        }
-    };
-
-    const seekPlayerToTime = (targetTime: number) => {
-        const player = getSafePlayer();
-
-        if (!player) {
-            return;
-        }
-
-        clearPauseTimeout();
-        console.log("seekPlayerToTime", targetTime);
-
-        try {
-            const safeTargetTime = Math.max(0, Math.floor(targetTime));
-
-            player.seekTo(safeTargetTime, true);
-
-            if (typeof player.playVideo === "function") {
-                player.playVideo();
-            }
-
-            pauseTimeoutRef.current = window.setTimeout(() => {
-                const safePlayer = getSafePlayer();
-
-                if (safePlayer && typeof safePlayer.pauseVideo === "function") {
-                    safePlayer.pauseVideo();
-            }
-            }, 350);
-        } catch {
-            // The YouTube iframe can briefly be unavailable while React is rendering/remounting.
-            // Ignoring this prevents a transient iframe state from crashing the editor.
-
-        }
-    };
-
-    const handleReady: YouTubeProps["onReady"] = (event) => {
-        const player = event.target as unknown as YT.Player;
-
-        if (!player || typeof player.seekTo !== "function") {
-            return;
-        }
-
-        playerRef.current = player;
-        setIsPlayerReady(true);
-
-        window.setTimeout(() => {
-            seekPlayerToTime(normalizedTime);
-        }, 500);
-    };
-
-    useEffect(() => {
-        if (!isPlayerReady) {
-            return;
-        }
-
-        const timeoutId = window.setTimeout(() => {
-            seekPlayerToTime(normalizedTime);
-        }, 100);
-
-        return () => {
-            window.clearTimeout(timeoutId);
-        };
-    }, [isPlayerReady, normalizedTime]);
-
-    useEffect(() => {
-        return () => {
-            clearPauseTimeout();
-            playerRef.current = null;
-        };
-    }, []);
-
-    useEffect(() => {
-        setIsPlayerReady(false);
-        playerRef.current = null;
-    }, [videoId]);
-
-    const pickCurrentTime = async () => {
-        const player = getSafePlayer();
-
-        if (!player || typeof player.getCurrentTime !== "function") {
-            return;
-        }
-
-        const currentTime = await player.getCurrentTime();
-
-        if (typeof currentTime === "number") {
-            onPickTime(Math.floor(currentTime));
-        }
-    };
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-base">{label}</CardTitle>
-                <CardDescription>
-                    Scrub to the correct frame, then click “Use current time”.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-                <YouTube
-                    // key={`${videoId}-${Math.floor(normalizedTime)}`}
-                    videoId={videoId}
-                    opts={opts}
-                    onReady={handleReady}
-                />
-                <Button type="button" variant="outline" onClick={pickCurrentTime}>
-                    Use current time
-                </Button>
-            </CardContent>
-        </Card>
-    );
-}
 
 export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
+
     const trpc = useTRPC();
     const queryClient = useQueryClient();
 
@@ -283,6 +116,15 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
         startFieldPosition: 25,
         result: "punt",
     });
+
+    /*useEffect(() => {
+        console.count("GameDriveEditor mounted");
+        console.log("GameDriveEditor props:", { gameId: game.id, tenantSlug });
+
+        return () => {
+            console.log("GameDriveEditor unmounted");
+        };
+    });*/
 
     const driveListQuery = useQuery(
         trpc.games.getDriveListForGame.queryOptions({
@@ -369,20 +211,23 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
 
     useEffect(() => {
         const drive = selectedDriveQuery.data as Drive | undefined;
+
+        if (!drive) {
+            return;
+        }
+
         const drivePlays = drive?.plays ?? [];
 
-        if (drive) {
-            setDriveProperties({
-                driveNumber: drive.driveNumber ?? 1,
-                possessingTeam:
-                    typeof drive.possessingTeam === "string"
-                        ? drive.possessingTeam
-                        : drive.possessingTeam?.id ?? "",
-                direction: drive.direction ?? "right",
-                startFieldPosition: drive.startFieldPosition ?? 25,
-                result: drive.result ?? "punt",
-            });
-        }
+        setDriveProperties({
+            driveNumber: drive.driveNumber ?? 1,
+            possessingTeam:
+                typeof drive.possessingTeam === "string"
+                    ? drive.possessingTeam
+                    : drive.possessingTeam?.id ?? "",
+            direction: drive.direction ?? "right",
+            startFieldPosition: drive.startFieldPosition ?? 25,
+            result: drive.result ?? "punt",
+        });
 
         setPlays(
             drivePlays.map((play, index) => ({
@@ -842,6 +687,7 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                                                 youTubeStart: time,
                                             })
                                         }
+                                        key={"start"}
                                     />
 
                                     <TimePickerYouTube
@@ -856,6 +702,7 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                                                 ),
                                             })
                                         }
+                                        key={"end"}
                                     />
                                 </div>
 
