@@ -17,7 +17,6 @@ import { Media } from '@/collections/Media'
 import { Teams } from '@/collections/Teams'
 import { Games } from '@/collections/Games'
 import { Drives } from '@/collections/Drives'
-import { Plays } from '@/collections/Plays'
 
 //Allows MONGODB to connect to the internet
 import dns from 'node:dns';
@@ -40,7 +39,6 @@ export default buildConfig({
         Teams,
         Games,
         Drives,
-        Plays,
     ],
     editor: lexicalEditor(),
     secret: process.env.PAYLOAD_SECRET || '',
@@ -59,7 +57,6 @@ export default buildConfig({
                     useTenantAccess: false,
                 },
                 drives: {},
-                plays: {},
                 media: {},
             },
             tenantField: {
