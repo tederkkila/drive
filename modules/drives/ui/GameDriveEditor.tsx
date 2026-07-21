@@ -25,6 +25,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import type { Drive, Game } from "@/payload-types";
 import { TimePickerYouTube } from "@/modules/drives/ui/TimePickerYouTube";
+import {
+    calculateAbsoluteDriveDistance,
+    getAbsolutePosition,
+} from "@/modules/drives/ui/fieldCalculations";
 
 type DriveDirection = "left" | "right";
 
@@ -256,6 +260,21 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
 
     const currentPlay = plays[currentPlayIndex];
 
+    const calculateYardsGained = (
+        startFieldPosition: number,
+        endFieldPosition: number,
+        direction: DriveDirection,
+    ) => {
+        const absoluteStart = getAbsolutePosition(startFieldPosition, direction);
+        const absoluteEnd = getAbsolutePosition(endFieldPosition, direction);
+
+        return calculateAbsoluteDriveDistance(
+            absoluteStart,
+            absoluteEnd,
+            direction,
+        );
+    };
+
     const selectedDriveNumber = useMemo(() => {
         return driveListQuery.data?.find((drive) => drive.id === selectedDriveId)?.driveNumber;
     }, [driveListQuery.data, selectedDriveId]);
@@ -271,6 +290,17 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                         ...play,
                         ...patch,
                 };
+
+                if (
+                    "startFieldPosition" in patch ||
+                    "endFieldPosition" in patch
+                ) {
+                    nextPlay.yardsGained = calculateYardsGained(
+                        nextPlay.startFieldPosition,
+                        nextPlay.endFieldPosition,
+                        driveProperties.direction,
+                    );
+                }
 
                 if ("youTubeStart" in patch) {
                     const minimumEndTime = nextPlay.youTubeStart + MIN_PLAY_DURATION_SECONDS;
@@ -330,10 +360,27 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
     };
 
     const patchDriveProperties = (patch: Partial<EditableDriveProperties>) => {
-        setDriveProperties((current) => ({
+            setDriveProperties((current) => {
+                const nextDriveProperties = {
             ...current,
             ...patch,
-        }));
+                };
+
+                if ("direction" in patch) {
+                    setPlays((currentPlays) =>
+                        currentPlays.map((play) => ({
+                            ...play,
+                            yardsGained: calculateYardsGained(
+                                play.startFieldPosition,
+                                play.endFieldPosition,
+                                nextDriveProperties.direction,
+                            ),
+                        })),
+                    );
+                }
+
+                return nextDriveProperties;
+            });
     };
 
     const saveDriveProperties = () => {
@@ -785,11 +832,7 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                                         <Input
                                             type="number"
                                             value={currentPlay.yardsGained}
-                                            onChange={(event) =>
-                                                patchCurrentPlay({
-                                                    yardsGained: Number(event.target.value),
-                                                })
-                                            }
+                                                readOnly
                                         />
                                     </div>
                                 </div>

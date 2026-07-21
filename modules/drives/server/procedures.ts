@@ -1,6 +1,10 @@
 import z from "zod";
 import { TRPCError } from "@trpc/server";
 import { Drive } from "@/payload-types";
+import {
+    calculateAbsoluteDriveDistance,
+    getAbsolutePosition,
+} from "@/modules/drives/ui/fieldCalculations";
 
 import { adminProcedure, baseProcedure, createTRPCRouter } from "@/trpc/init";
 
@@ -225,10 +229,41 @@ export const drivesRouter = createTRPCRouter({
             }),
         )
         .mutation(async ({ ctx, input }) => {
-            const plays = input.plays.map((play, index) => ({
-                ...play,
-                playNumber: index + 1,
-            }));
+            const drive = await ctx.db.findByID({
+                collection: "drives",
+                id: input.driveId,
+                depth: 0,
+            });
+
+            if (!drive) {
+                throw new TRPCError({
+                    code: "NOT_FOUND",
+                    message: "Drive not found",
+                });
+            }
+
+            const direction = drive.direction;
+
+            const plays = input.plays.map((play, index) => {
+                const absoluteStart = getAbsolutePosition(
+                    play.startFieldPosition,
+                    direction,
+                );
+                const absoluteEnd = getAbsolutePosition(
+                    play.endFieldPosition,
+                    direction,
+                );
+
+                return {
+                    ...play,
+                    playNumber: index + 1,
+                    yardsGained: calculateAbsoluteDriveDistance(
+                        absoluteStart,
+                        absoluteEnd,
+                        direction,
+                    ),
+                };
+            });
 
             return ctx.db.update({
                 collection: "drives",
@@ -249,7 +284,7 @@ export const drivesRouter = createTRPCRouter({
             const drive = await ctx.db.findByID({
                 collection: "drives",
                 id: input.driveId,
-                depth: 1,
+                depth: 0,
             });
 
             if (!drive) {
