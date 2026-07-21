@@ -20,6 +20,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import type { Drive, Game } from "@/payload-types";
@@ -113,7 +114,7 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
         driveNumber: 1,
         possessingTeam: "",
         direction: "right",
-        startFieldPosition: 25,
+        startFieldPosition: -25,
         result: "punt",
     });
 
@@ -585,32 +586,42 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                         ) : (
                             <>
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+
+
                                     <div className="space-y-2">
                                         <Label>Quarter</Label>
-                                        <Input
-                                            type="number"
-                                            value={currentPlay.quarter}
-                                            onChange={(event) =>
-                                                patchCurrentPlay({
-                                                    quarter: Number(event.target.value),
-                                                })
-                                            }
-                                        />
+                                        <RadioGroup
+                                            value={String(currentPlay.quarter ?? 1)}
+                                            onValueChange={(value) => patchCurrentPlay({ quarter: Number(value) })}
+                                            className="flex gap-4"
+                                        >
+                                            {[1, 2, 3, 4].map((q) => (
+                                                <div key={q} className="flex items-center space-x-2">
+                                                    <RadioGroupItem value={String(q)} id={`q${q}`} />
+                                                    <Label htmlFor={`q${q}`} className="cursor-pointer font-normal">
+                                                        {q}
+                                                    </Label>
+                                                </div>
+                                            ))}
+                                        </RadioGroup>
                                     </div>
 
                                     <div className="space-y-2">
                                         <Label>Down</Label>
-                                        <Input
-                                            type="number"
-                                            min={1}
-                                            max={4}
-                                            value={currentPlay.down}
-                                            onChange={(event) =>
-                                                patchCurrentPlay({
-                                                    down: Number(event.target.value),
-                                                })
-                                            }
-                                        />
+                                        <RadioGroup
+                                            value={String(currentPlay.down ?? 1)}
+                                            onValueChange={(value) => patchCurrentPlay({ down: Number(value) })}
+                                            className="flex gap-4"
+                                        >
+                                            {[1, 2, 3, 4].map((q) => (
+                                                <div key={q} className="flex items-center space-x-2">
+                                                    <RadioGroupItem value={String(q)} id={`q${q}`} />
+                                                    <Label htmlFor={`q${q}`} className="cursor-pointer font-normal">
+                                                        {q}
+                                                    </Label>
+                                                </div>
+                                            ))}
+                                        </RadioGroup>
                                     </div>
 
                                     <div className="space-y-2">
@@ -628,21 +639,22 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
 
                                     <div className="space-y-2">
                                         <Label>Hash</Label>
-                                        <Select
-                                            value={currentPlay.hash}
-                                            onValueChange={(value: HashValue) =>
-                                                patchCurrentPlay({ hash: value })
-                                            }
+
+                                        <RadioGroup
+                                            value={String(currentPlay.hash ?? 1)}
+                                            onValueChange={(value) => patchCurrentPlay({ hash: value })}
+                                            className="flex gap-4"
                                         >
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="left">Left</SelectItem>
-                                                <SelectItem value="middle">Middle</SelectItem>
-                                                <SelectItem value="right">Right</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                            {["left", "middle", "right"].map((q) => (
+                                                <div key={q} className="flex items-center space-x-2">
+                                                    <RadioGroupItem value={q} id={`q${q}`} />
+                                                    <Label htmlFor={`q${q}`} className="cursor-pointer font-normal">
+                                                        {q}
+                                                    </Label>
+                                                </div>
+                                            ))}
+                                        </RadioGroup>
+
                                     </div>
                                 </div>
 
