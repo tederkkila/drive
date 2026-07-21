@@ -688,8 +688,10 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                                         <Label>Hash</Label>
 
                                         <RadioGroup
-                                            value={String(currentPlay.hash ?? 1)}
-                                            onValueChange={(value) => patchCurrentPlay({ hash: value })}
+                                            value={currentPlay.hash}
+                                            onValueChange={(value: HashValue) =>
+                                                patchCurrentPlay({ hash: value })
+                                            }
                                             className="flex gap-4"
                                         >
                                             {["left", "middle", "right"].map((q) => (
