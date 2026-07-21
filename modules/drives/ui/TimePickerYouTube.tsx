@@ -1,4 +1,4 @@
-import YouTube, { YouTubeProps } from "react-youtube";
+import YouTube, { YouTubeProps, YouTubePlayer } from "react-youtube";
 import { useRef, useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,6 @@ interface TimePickerYouTubeProps {
     time: number;
     label: string;
     onPickTime: (time: number) => void;
-    key?: React.Key;
 }
 
 export const TimePickerYouTube = ({
@@ -17,7 +16,7 @@ export const TimePickerYouTube = ({
     label,
     onPickTime,
 }: TimePickerYouTubeProps) => {
-    const playerRef = useRef<YT.Player | null>(null);
+    const playerRef = useRef<YouTubePlayer  | null>(null);
     const [ isPlayerReady, setIsPlayerReady ] = useState(false);
 
   // Guard references to track state changes safely
@@ -44,12 +43,13 @@ export const TimePickerYouTube = ({
         },
     };
 
-    const getSafePlayer = () => {
+  // 3. Update return type here
+  const getSafePlayer = async (): Promise<YouTubePlayer | null> => {
         const player = playerRef.current;
     if (!player || typeof player.seekTo !== "function") return null;
         try {
             const iframe = typeof player.getIframe === "function"
-                ? player.getIframe()
+                ? await player.getIframe()
                 : null;
 
             if (!iframe || !iframe.src) return null;
@@ -60,21 +60,21 @@ export const TimePickerYouTube = ({
     };
 
   // Triggers the micro-playback trick to flush out the fallback thumbnail image
-  const forceRenderFrame = (targetTime: number) => {
-    const player = getSafePlayer();
+  const forceRenderFrame = async (targetTime: number) => {
+    const player = await getSafePlayer();
     if (!player) return;
 
     lastSoughtTimeRef.current = targetTime;
     isProgrammaticSeekRef.current = true;
 
     // 1. Mute to prevent any audio pops during the frame flash
-    if (typeof player.mute === "function") player.mute();
+    if (typeof player.mute === "function") await player.mute();
 
     // 2. Displace playhead to target timestamp
-    player.seekTo(targetTime, true);
+    await player.seekTo(targetTime, true);
 
     // 3. Command playback to force buffer hydration
-    if (typeof player.playVideo === "function") player.playVideo();
+    if (typeof player.playVideo === "function") await player.playVideo();
   };
 
   // Intercept state updates to instantly freeze the player once the frame arrives
@@ -88,12 +88,12 @@ export const TimePickerYouTube = ({
 
       // Pause immediately now that the frame is rendered on canvas
     if (typeof player.pauseVideo === "function") {
-      player.pauseVideo();
+      void player.pauseVideo();
     }
 
       // Restore user audio configuration
       if (typeof player.unMute === "function") {
-        player.unMute();
+        void player.unMute();
       }
     }
   };
@@ -101,15 +101,20 @@ export const TimePickerYouTube = ({
   // Sync external parent prop changes
     useEffect(() => {
         if (!isPlayerReady) return;
-        const player = getSafePlayer();
-        if (!player) return;
 
-        const playerTime = Math.floor(player.getCurrentTime());
+        const syncPlayer = async () => {
+            const player = await getSafePlayer();
+            if (!player) return;
 
-    // Check if the parent time is genuinely different from player's position
-    if (playerTime !== floorTime && lastSoughtTimeRef.current !== floorTime) {
-      forceRenderFrame(floorTime);
-        }
+            const playerTime = Math.floor(await player.getCurrentTime());
+
+            // Check if the parent time is genuinely different from player's position
+            if (playerTime !== floorTime && lastSoughtTimeRef.current !== floorTime) {
+                await forceRenderFrame(floorTime);
+            }
+        };
+
+        void syncPlayer();
   }, [floorTime, isPlayerReady]);
 
   // Handle absolute video switches
@@ -126,19 +131,17 @@ export const TimePickerYouTube = ({
         setIsPlayerReady(true);
 
         // On first load, enforce the visual seek and pause block
-        forceRenderFrame(floorTime);
+        void forceRenderFrame(floorTime);
     };
 
     const pickCurrentTime = async () => {
-        const player = getSafePlayer();
+        const player = await getSafePlayer();
     if (!player || typeof player.getCurrentTime !== "function") return;
 
         const currentTime = await player.getCurrentTime();
-        if (typeof currentTime === "number") {
-            const roundedTime = Math.floor(currentTime);
-            onPickTime(roundedTime);
-            forceRenderFrame(roundedTime);
-        }
+        const roundedTime = Math.floor(currentTime);
+        onPickTime(roundedTime);
+        await forceRenderFrame(roundedTime);
     };
 
     return (
