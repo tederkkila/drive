@@ -43,8 +43,6 @@ const gameFormSchema = z.object({
     videoId: z.string().min(1, "Video ID is required"),
 });
 
-type GameFormValues = z.infer<typeof gameFormSchema>;
-
 interface NewGameFormProps {
     tenantSlug: string;
 }
