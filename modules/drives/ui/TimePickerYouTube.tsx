@@ -1,7 +1,9 @@
 import YouTube, { YouTubeProps, YouTubePlayer } from "react-youtube";
-import { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Box } from "@radix-ui/themes";
+import { Input } from "@/components/ui/input";
 
 interface TimePickerYouTubeProps {
     videoId: string;
@@ -24,11 +26,11 @@ export const TimePickerYouTube = ({
     const isProgrammaticSeekRef = useRef<boolean>(false);
 
     const normalizedTime = Number.isFinite(time) ? Math.max(0, time) : 0;
-      const floorTime = Math.floor(normalizedTime);
+    const floorTime = Math.floor(normalizedTime);
 
-      // Capture the initial time once on mount/video change to prevent
-      // react-youtube from rebuilding the player options on every prop change.
-      const initialTimeRef = useRef<number>(floorTime);
+    // Capture the initial time once on mount/video change to prevent
+    // react-youtube from rebuilding the player options on every prop change.
+    const initialTimeRef = useRef<number>(floorTime);
 
     const opts: YouTubeProps["opts"] = {
         width: "100%",
@@ -60,43 +62,44 @@ export const TimePickerYouTube = ({
     };
 
   // Triggers the micro-playback trick to flush out the fallback thumbnail image
-  const forceRenderFrame = async (targetTime: number) => {
-    const player = await getSafePlayer();
-    if (!player) return;
+    const forceRenderFrame = async (targetTime: number) => {
+        console.log("forceRenderFrame", targetTime)
+        const player = await getSafePlayer();
+        if (!player) return;
 
-    lastSoughtTimeRef.current = targetTime;
-    isProgrammaticSeekRef.current = true;
+        lastSoughtTimeRef.current = targetTime;
+        isProgrammaticSeekRef.current = true;
 
-    // 1. Mute to prevent any audio pops during the frame flash
-    if (typeof player.mute === "function") await player.mute();
+        // 1. Mute to prevent any audio pops during the frame flash
+        if (typeof player.mute === "function") await player.mute();
 
-    // 2. Displace playhead to target timestamp
-    await player.seekTo(targetTime, true);
+        // 2. Displace playhead to target timestamp
+        await player.seekTo(targetTime, true);
 
-    // 3. Command playback to force buffer hydration
-    if (typeof player.playVideo === "function") await player.playVideo();
-  };
+        // 3. Command playback to force buffer hydration
+        if (typeof player.playVideo === "function") await player.playVideo();
+    };
 
-  // Intercept state updates to instantly freeze the player once the frame arrives
-  const handleStateChange: YouTubeProps["onStateChange"] = (event) => {
-    const playerState = event.data;
-    const player = event.target;
+    // Intercept state updates to instantly freeze the player once the frame arrives
+    const handleStateChange: YouTubeProps["onStateChange"] = (event) => {
+        const playerState = event.data;
+        const player = event.target;
 
-    // State 1 = PLAYING
-    if (playerState === 1 && isProgrammaticSeekRef.current) {
-      isProgrammaticSeekRef.current = false;
+        // State 1 = PLAYING
+        if (playerState === 1 && isProgrammaticSeekRef.current) {
+            isProgrammaticSeekRef.current = false;
 
-      // Pause immediately now that the frame is rendered on canvas
-    if (typeof player.pauseVideo === "function") {
-      void player.pauseVideo();
-    }
+            // Pause immediately now that the frame is rendered on canvas
+            if (typeof player.pauseVideo === "function") {
+                void player.pauseVideo();
+            }
 
-      // Restore user audio configuration
-      if (typeof player.unMute === "function") {
-        void player.unMute();
-      }
-    }
-  };
+            // Restore user audio configuration
+            if (typeof player.unMute === "function") {
+                void player.unMute();
+            }
+        }
+    };
 
   // Sync external parent prop changes
     useEffect(() => {
@@ -134,12 +137,25 @@ export const TimePickerYouTube = ({
         void forceRenderFrame(floorTime);
     };
 
+    const handleInputChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        console.log("handleInputChange", event.target.value)
+        const value = event.target.value;
+        const parsedValue = parseInt(value, 10);
+        if (!Number.isNaN(parsedValue)) {
+            const roundedTime = Math.floor(parsedValue);
+            onPickTime(roundedTime);
+            await forceRenderFrame(roundedTime);
+        }
+    }
+
     const pickCurrentTime = async () => {
         const player = await getSafePlayer();
-    if (!player || typeof player.getCurrentTime !== "function") return;
+
+        if (!player || typeof player.getCurrentTime !== "function") return;
 
         const currentTime = await player.getCurrentTime();
         const roundedTime = Math.floor(currentTime);
+
         onPickTime(roundedTime);
         await forceRenderFrame(roundedTime);
     };
@@ -160,9 +176,21 @@ export const TimePickerYouTube = ({
                     onReady={handleReady}
                     onStateChange={handleStateChange}
                 />
-                <Button type="button" variant="outline" onClick={pickCurrentTime}>
-                    Use current time
-                </Button>
+                <Box className="flex items-center gap-2">
+                    <Button type="button" variant="outline" onClick={pickCurrentTime}>
+                        Use current time
+                    </Button>
+                    <Input
+                        className="ml-2 w-20"
+                        type="number"
+                        step="1"
+                        value={floorTime}
+                        onChange={handleInputChange}
+                    />
+                    <span className="ml-2 text-xs font-mono text-gray-500 select-none">
+                        {new Date(floorTime * 1000).toISOString().substring(11, 19)}
+                    </span>
+                </Box>
             </CardContent>
         </Card>
     );
