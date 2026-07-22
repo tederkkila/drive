@@ -48,6 +48,7 @@ export const baseProcedure = t.procedure.use(async ({ next }) => {
 
 export const adminProcedure = t.procedure.use(async ({ ctx, next }) => {
     const user = ctx.user;
+    const payload = await getPayload({ config });
 
     if (!user) {
         throw new TRPCError({
@@ -59,6 +60,7 @@ export const adminProcedure = t.procedure.use(async ({ ctx, next }) => {
     return next({
         ctx: {
             ...ctx,
+            db: payload,
             user,
         },
     });

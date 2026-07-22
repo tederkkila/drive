@@ -63,7 +63,6 @@ export const TimePickerYouTube = ({
 
   // Triggers the micro-playback trick to flush out the fallback thumbnail image
     const forceRenderFrame = async (targetTime: number) => {
-        console.log("forceRenderFrame", targetTime)
         const player = await getSafePlayer();
         if (!player) return;
 
@@ -138,7 +137,6 @@ export const TimePickerYouTube = ({
     };
 
     const handleInputChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        console.log("handleInputChange", event.target.value)
         const value = event.target.value;
         const parsedValue = parseInt(value, 10);
         if (!Number.isNaN(parsedValue)) {

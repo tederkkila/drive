@@ -38,8 +38,8 @@ const gameFormSchema = z.object({
     date: z.string().min(1, "Date is required"),
     homeTeam: z.string().min(1, "Home team is required"),
     awayTeam: z.string().min(1, "Away team is required"),
-    homeScore: z.number().min(0),
-    awayScore: z.number().min(0),
+    homeScore: z.coerce.number().min(0, "Score must be 0 or greater"),
+    awayScore: z.coerce.number().min(0, "Score must be 0 or greater"),
     videoId: z.string().min(1, "Video ID is required"),
 });
 
@@ -54,9 +54,6 @@ export function NewGameForm({ tenantSlug }: NewGameFormProps) {
     const { data: tenant } = useQuery(trpc.tenants.getOne.queryOptions({ tenantSlug }));
     const { data: teamsData } = useQuery(trpc.teams.getAll.queryOptions({ tenantSlug }));
 
-    console.log("tenant", tenant)
-    console.log("teamsData", teamsData)
-
     const createGameOptions = trpc.games.createGame.mutationOptions({
         onSuccess: (data) => {
             toast.success("Game created successfully!");
@@ -67,9 +64,10 @@ export function NewGameForm({ tenantSlug }: NewGameFormProps) {
         },
     });
 
-    const createGame = useMutation(createGameOptions)
+    const createGame = useMutation(createGameOptions);
 
-    const form = useForm<z.input<typeof gameFormSchema>>({
+  // FIX 2: Use z.infer instead of z.input to maintain consistent runtime typing
+  const form = useForm<z.infer<typeof gameFormSchema>>({
         resolver: zodResolver(gameFormSchema),
         defaultValues: {
         name: "",
@@ -101,7 +99,7 @@ export function NewGameForm({ tenantSlug }: NewGameFormProps) {
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/^-|-$/g, "");
-        form.setValue("slug", slug);
+    form.setValue("slug", slug, { shouldValidate: true });
     };
 
     return (
@@ -133,9 +131,7 @@ export function NewGameForm({ tenantSlug }: NewGameFormProps) {
                                             }
                                         }}
                                     />
-                                    {fieldState.invalid && (
-                                        <FieldError errors={[fieldState.error]} />
-                                    )}
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                 </Field>
                             )}
                         />
@@ -164,9 +160,7 @@ export function NewGameForm({ tenantSlug }: NewGameFormProps) {
                                     <FieldDescription>
                                         URL-friendly version of the game name
                                     </FieldDescription>
-                                    {fieldState.invalid && (
-                                        <FieldError errors={[fieldState.error]} />
-                                    )}
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                 </Field>
                             )}
                         />
@@ -183,9 +177,7 @@ export function NewGameForm({ tenantSlug }: NewGameFormProps) {
                                         aria-invalid={fieldState.invalid}
                                         {...field}
                                     />
-                                    {fieldState.invalid && (
-                                        <FieldError errors={[fieldState.error]} />
-                                    )}
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                 </Field>
                             )}
                         />
@@ -205,16 +197,14 @@ export function NewGameForm({ tenantSlug }: NewGameFormProps) {
                                                 <SelectValue placeholder="Select home team" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {teamsData?.docs.map((team) => (
+                        {teamsData?.docs?.map((team) => (
                                                     <SelectItem key={team.id} value={team.id}>
                                                         {team.name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        {fieldState.invalid && (
-                                            <FieldError errors={[fieldState.error]} />
-                                        )}
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                     </Field>
                                 )}
                             />
@@ -233,22 +223,21 @@ export function NewGameForm({ tenantSlug }: NewGameFormProps) {
                                                 <SelectValue placeholder="Select away team" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {teamsData?.docs.map((team) => (
+                        {teamsData?.docs?.map((team) => (
                                                     <SelectItem key={team.id} value={team.id}>
                                                         {team.name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        {fieldState.invalid && (
-                                            <FieldError errors={[fieldState.error]} />
-                                        )}
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                     </Field>
                                 )}
                             />
                     </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* FIX 3: Simplify inputs by allowing Zod coercion to handle standard native events */}
                             <Controller
                                 control={form.control}
                                 name="homeScore"
@@ -260,13 +249,8 @@ export function NewGameForm({ tenantSlug }: NewGameFormProps) {
                                             type="number"
                                             aria-invalid={fieldState.invalid}
                                             {...field}
-                                            onChange={(e) =>
-                                                field.onChange(Number.parseInt(e.target.value) || 0)
-                                            }
                                         />
-                                        {fieldState.invalid && (
-                                            <FieldError errors={[fieldState.error]} />
-                                        )}
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                     </Field>
                                 )}
                             />
@@ -282,13 +266,8 @@ export function NewGameForm({ tenantSlug }: NewGameFormProps) {
                                             type="number"
                                             aria-invalid={fieldState.invalid}
                                             {...field}
-                                            onChange={(e) =>
-                                                field.onChange(Number.parseInt(e.target.value) || 0)
-                                            }
                                         />
-                                        {fieldState.invalid && (
-                                            <FieldError errors={[fieldState.error]} />
-                                        )}
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                     </Field>
                                 )}
                             />

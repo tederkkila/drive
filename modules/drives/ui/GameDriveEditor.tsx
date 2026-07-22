@@ -230,7 +230,7 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                     ? drive.possessingTeam
                     : drive.possessingTeam?.id ?? "",
             direction: drive.direction ?? "right",
-            startFieldPosition: drive.startFieldPosition ?? 25,
+            startFieldPosition: drive.startFieldPosition ?? -25,
             result: drive.result ?? "punt",
         });
 
@@ -246,8 +246,8 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                 youTubeEnd: play.youTubeEnd ?? 5,
                 description: play.description ?? "",
                 playType: play.playType ?? "run",
-                startFieldPosition: play.startFieldPosition ?? 25,
-                endFieldPosition: play.endFieldPosition ?? 25,
+                startFieldPosition: play.startFieldPosition ?? -25,
+                endFieldPosition: play.endFieldPosition ?? -25,
                 yardsGained: play.yardsGained ?? 0,
                 penalty: play.penalty ?? "",
                 penaltyYards: play.penaltyYards ?? undefined,
@@ -328,7 +328,34 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
 
     const addPlay = () => {
         setPlays((current) => {
-            const nextPlay = createEmptyPlay(current.length + 1);
+            const previousPlay = current.at(-1);
+            const nextPlayNumber = current.length + 1;
+
+            const nextPlayStartTime = previousPlay
+                ? previousPlay.youTubeEnd + 10
+                : 0;
+
+            const nextPlayStartFieldPosition = previousPlay
+                ? previousPlay.endFieldPosition + (previousPlay.penaltyYards ?? 0)
+                : driveProperties.startFieldPosition;
+
+            const nextPlay: EditablePlay = {
+                ...createEmptyPlay(nextPlayNumber),
+                quarter: previousPlay?.quarter ?? 1,
+                down: previousPlay?.down ?? 1,
+                yardsToGo: previousPlay?.yardsToGo ?? 10,
+                hash: previousPlay?.hash ?? "middle",
+                youTubeStart: nextPlayStartTime,
+                youTubeEnd: nextPlayStartTime + 10,
+                startFieldPosition: nextPlayStartFieldPosition,
+                endFieldPosition: nextPlayStartFieldPosition,
+                yardsGained: calculateYardsGained(
+                    nextPlayStartFieldPosition,
+                    nextPlayStartFieldPosition,
+                    driveProperties.direction,
+                ),
+            };
+
             setCurrentPlayIndex(current.length);
             return [...current, nextPlay];
         });
