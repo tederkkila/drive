@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Select,
     SelectContent,
@@ -26,8 +27,8 @@ import { toast } from "sonner";
 import type { Drive, Game } from "@/payload-types";
 import { TimePickerYouTube } from "@/modules/drives/ui/TimePickerYouTube";
 import {
-    calculateAbsoluteDriveDistance,
-    getAbsolutePosition,
+    calculateAbsoluteDriveDistance, calculateEndSpotAbsolute,
+    getAbsolutePosition, getFootballSpot,
 } from "@/modules/drives/ui/fieldCalculations";
 
 type DriveDirection = "left" | "right";
@@ -114,6 +115,7 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
     const [selectedDriveId, setSelectedDriveId] = useState<string>("");
     const [currentPlayIndex, setCurrentPlayIndex] = useState(0);
     const [plays, setPlays] = useState<EditablePlay[]>([]);
+    const previousLoadedDriveIdRef = useRef<string>("");
     const [driveProperties, setDriveProperties] = useState<EditableDriveProperties>({
         driveNumber: 1,
         possessingTeam: "",
@@ -222,6 +224,9 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
         }
 
         const drivePlays = drive?.plays ?? [];
+        const isDifferentDrive = previousLoadedDriveIdRef.current !== drive.id;
+
+        previousLoadedDriveIdRef.current = drive.id;
 
         setDriveProperties({
             driveNumber: drive.driveNumber ?? 1,
@@ -255,7 +260,13 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
             })),
         );
 
-        setCurrentPlayIndex(0);
+        setCurrentPlayIndex((index) => {
+            if (isDifferentDrive) {
+                return 0;
+            }
+
+            return Math.max(0, Math.min(index, drivePlays.length - 1));
+        });
     }, [selectedDriveQuery.data]);
 
     const currentPlay = plays[currentPlayIndex];
@@ -335,9 +346,29 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                 ? previousPlay.youTubeEnd + 10
                 : 0;
 
-            const nextPlayStartFieldPosition = previousPlay
-                ? previousPlay.endFieldPosition + (previousPlay.penaltyYards ?? 0)
-                : driveProperties.startFieldPosition;
+            let previousEndFieldPosition = driveProperties.startFieldPosition;
+
+            if (previousPlay) {
+
+                previousEndFieldPosition = previousPlay.endFieldPosition;
+
+                if (previousPlay.penaltyYards !== undefined) {
+
+                    if (previousPlay.nullifyPlay) {
+                        //ignore previous play yardage
+                        previousEndFieldPosition = previousPlay.startFieldPosition;
+                    }
+
+                    //calculate new yardage
+                    const absoluteSpot = getAbsolutePosition(previousEndFieldPosition, driveProperties.direction);
+                    const absolutePenaltySpot = calculateEndSpotAbsolute(absoluteSpot, previousPlay.penaltyYards, driveProperties.direction);
+                    previousEndFieldPosition = getFootballSpot(absolutePenaltySpot, driveProperties.direction);
+
+                }
+            }
+
+
+            const nextPlayStartFieldPosition = previousEndFieldPosition;
 
             const nextPlay: EditablePlay = {
                 ...createEmptyPlay(nextPlayNumber),
@@ -436,7 +467,7 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                         <Label>Selected Drive</Label>
                         <Select value={selectedDriveId} onValueChange={setSelectedDriveId}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select a drive" />
+                                <SelectValue placeholder="Select a drive"/>
                             </SelectTrigger>
                             <SelectContent>
                                 {driveListQuery.data?.map((drive) => (
@@ -471,270 +502,197 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                 </Card>
             ) : (
                 <>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Drive Properties</CardTitle>
-                        <CardDescription>
-                            View and edit the selected drive metadata.
-                        </CardDescription>
-                    </CardHeader>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Drive Properties</CardTitle>
+                            <CardDescription>
+                                View and edit the selected drive metadata.
+                            </CardDescription>
+                        </CardHeader>
 
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
-                            <div className="space-y-2">
-                                <Label>Drive Number</Label>
-                                <Input
-                                    type="number"
-                                    min={1}
-                                    value={driveProperties.driveNumber}
-                                    onChange={(event) =>
-                                        patchDriveProperties({
-                                            driveNumber: Number(event.target.value),
-                                        })
-                                    }
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label>Possessing Team</Label>
-                                <Select
-                                    value={driveProperties.possessingTeam}
-                                    onValueChange={(value) =>
-                                        patchDriveProperties({
-                                            possessingTeam: value,
-                                        })
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select team" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {typeof game.homeTeam !== "string" && (
-                                            <SelectItem value={game.homeTeam.id}>
-                                                {game.homeTeam.name}
-                                            </SelectItem>
-                                        )}
-
-                                        {typeof game.awayTeam !== "string" && (
-                                            <SelectItem value={game.awayTeam.id}>
-                                                {game.awayTeam.name}
-                                            </SelectItem>
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label>Direction</Label>
-                                <Select
-                                    value={driveProperties.direction}
-                                    onValueChange={(value: DriveDirection) =>
-                                        patchDriveProperties({
-                                            direction: value,
-                                        })
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="left">Left</SelectItem>
-                                        <SelectItem value="right">Right</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label>Start Field Position</Label>
-                                <Input
-                                    type="number"
-                                    value={driveProperties.startFieldPosition}
-                                    onChange={(event) =>
-                                        patchDriveProperties({
-                                            startFieldPosition: Number(event.target.value),
-                                        })
-                                    }
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label>Result</Label>
-                                <Select
-                                    value={driveProperties.result}
-                                    onValueChange={(value: DriveResult) =>
-                                        patchDriveProperties({
-                                            result: value,
-                                        })
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select result" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="touchdown">Touchdown</SelectItem>
-                                        <SelectItem value="field_goal">Field Goal</SelectItem>
-                                        <SelectItem value="interception">Interception</SelectItem>
-                                        <SelectItem value="fumble_lost">Fumble Lost</SelectItem>
-                                        <SelectItem value="turnover_on_downs">
-                                            Turnover on Downs
-                                        </SelectItem>
-                                        <SelectItem value="punt">Punt</SelectItem>
-                                        <SelectItem value="end_of_period">End of Period</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end">
-                            <Button
-                                type="button"
-                                onClick={saveDriveProperties}
-                                disabled={updateDriveProperties.isPending}
-                            >
-                                {updateDriveProperties.isPending
-                                    ? "Saving Drive..."
-                                    : "Save Drive Properties"}
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>
-                            Play Editor{selectedDriveNumber ? ` — Drive ${selectedDriveNumber}` : ""}
-                        </CardTitle>
-                        <CardDescription>
-                            Add, remove, navigate, and edit plays for the selected drive.
-                        </CardDescription>
-                    </CardHeader>
-
-                    <CardContent className="space-y-6">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                disabled={currentPlayIndex === 0}
-                                onClick={() => setCurrentPlayIndex((index) => Math.max(0, index - 1))}
-                            >
-                                Previous Play
-                            </Button>
-
-                            <div className="text-sm text-muted-foreground">
-                                {plays.length === 0
-                                    ? "No plays yet"
-                                    : `Play ${currentPlayIndex + 1} of ${plays.length}`}
-                            </div>
-
-                            <Button
-                                type="button"
-                                variant="outline"
-                                disabled={plays.length === 0 || currentPlayIndex >= plays.length - 1}
-                                onClick={() =>
-                                    setCurrentPlayIndex((index) =>
-                                        Math.min(plays.length - 1, index + 1),
-                                    )
-                                }
-                            >
-                                Next Play
-                            </Button>
-
-                            <Button type="button" onClick={addPlay}>
-                                Add Play
-                            </Button>
-
-                            <Button
-                                type="button"
-                                variant="destructive"
-                                disabled={!currentPlay}
-                                onClick={removeCurrentPlay}
-                            >
-                                Remove Play
-                            </Button>
-                        </div>
-
-                        {!currentPlay ? (
-                            <div className="rounded-lg border bg-muted/50 p-4 text-sm text-muted-foreground">
-                                No play selected. Add a play to begin.
-                            </div>
-                        ) : (
-                            <>
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-
-
-                                    <div className="space-y-2">
-                                        <Label>Quarter</Label>
-                                        <RadioGroup
-                                            value={String(currentPlay.quarter ?? 1)}
-                                            onValueChange={(value) => patchCurrentPlay({ quarter: Number(value) })}
-                                            className="flex gap-4"
-                                        >
-                                            {[1, 2, 3, 4].map((q) => (
-                                                <div key={q} className="flex items-center space-x-2">
-                                                    <RadioGroupItem value={String(q)} id={`q${q}`} />
-                                                    <Label htmlFor={`q${q}`} className="cursor-pointer font-normal">
-                                                        {q}
-                                                    </Label>
-                                                </div>
-                                            ))}
-                                        </RadioGroup>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label>Down</Label>
-                                        <RadioGroup
-                                            value={String(currentPlay.down ?? 1)}
-                                            onValueChange={(value) => patchCurrentPlay({ down: Number(value) })}
-                                            className="flex gap-4"
-                                        >
-                                            {[1, 2, 3, 4].map((q) => (
-                                                <div key={q} className="flex items-center space-x-2">
-                                                    <RadioGroupItem value={String(q)} id={`q${q}`} />
-                                                    <Label htmlFor={`q${q}`} className="cursor-pointer font-normal">
-                                                        {q}
-                                                    </Label>
-                                                </div>
-                                            ))}
-                                        </RadioGroup>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label>Distance</Label>
-                                        <Input
-                                            type="number"
-                                            value={currentPlay.yardsToGo}
-                                            onChange={(event) =>
-                                                patchCurrentPlay({
-                                                    yardsToGo: Number(event.target.value),
-                                                })
-                                            }
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label>Hash</Label>
-
-                                        <RadioGroup
-                                            value={currentPlay.hash}
-                                            onValueChange={(value: HashValue) =>
-                                                patchCurrentPlay({ hash: value })
-                                            }
-                                            className="flex gap-4"
-                                        >
-                                            {["left", "middle", "right"].map((q) => (
-                                                <div key={q} className="flex items-center space-x-2">
-                                                    <RadioGroupItem value={q} id={`q${q}`} />
-                                                    <Label htmlFor={`q${q}`} className="cursor-pointer font-normal">
-                                                        {q}
-                                                    </Label>
-                                                </div>
-                                            ))}
-                                        </RadioGroup>
-
-                                    </div>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+                                <div className="space-y-2">
+                                    <Label>Drive Number</Label>
+                                    <Input
+                                        type="number"
+                                        min={1}
+                                        value={driveProperties.driveNumber}
+                                        onChange={(event) =>
+                                            patchDriveProperties({
+                                                driveNumber: Number(event.target.value),
+                                            })
+                                        }
+                                    />
                                 </div>
 
-{/*
+                                <div className="space-y-2">
+                                    <Label>Possessing Team</Label>
+                                    <Select
+                                        value={driveProperties.possessingTeam}
+                                        onValueChange={(value) =>
+                                            patchDriveProperties({
+                                                possessingTeam: value,
+                                            })
+                                        }
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select team"/>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {typeof game.homeTeam !== "string" && (
+                                                <SelectItem value={game.homeTeam.id}>
+                                                    {game.homeTeam.name}
+                                                </SelectItem>
+                                            )}
+
+                                            {typeof game.awayTeam !== "string" && (
+                                                <SelectItem value={game.awayTeam.id}>
+                                                    {game.awayTeam.name}
+                                                </SelectItem>
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Direction</Label>
+                                    <Select
+                                        value={driveProperties.direction}
+                                        onValueChange={(value: DriveDirection) =>
+                                            patchDriveProperties({
+                                                direction: value,
+                                            })
+                                        }
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue/>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="left">Left</SelectItem>
+                                            <SelectItem value="right">Right</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Start Field Position</Label>
+                                    <Input
+                                        type="number"
+                                        value={driveProperties.startFieldPosition}
+                                        onChange={(event) =>
+                                            patchDriveProperties({
+                                                startFieldPosition: Number(event.target.value),
+                                            })
+                                        }
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Result</Label>
+                                    <Select
+                                        value={driveProperties.result}
+                                        onValueChange={(value: DriveResult) =>
+                                            patchDriveProperties({
+                                                result: value,
+                                            })
+                                        }
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select result"/>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="touchdown">Touchdown</SelectItem>
+                                            <SelectItem value="field_goal">Field Goal</SelectItem>
+                                            <SelectItem value="interception">Interception</SelectItem>
+                                            <SelectItem value="fumble_lost">Fumble Lost</SelectItem>
+                                            <SelectItem value="turnover_on_downs">
+                                                Turnover on Downs
+                                            </SelectItem>
+                                            <SelectItem value="punt">Punt</SelectItem>
+                                            <SelectItem value="end_of_period">End of Period</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end">
+                                <Button
+                                    type="button"
+                                    onClick={saveDriveProperties}
+                                    disabled={updateDriveProperties.isPending}
+                                >
+                                    {updateDriveProperties.isPending
+                                        ? "Saving Drive..."
+                                        : "Save Drive Properties"}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>
+                                Play Editor{selectedDriveNumber ? ` — Drive ${selectedDriveNumber}` : ""}
+                            </CardTitle>
+                            <CardDescription>
+                                Add, remove, navigate, and edit plays for the selected drive.
+                            </CardDescription>
+                        </CardHeader>
+
+                        <CardContent className="space-y-6">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={currentPlayIndex === 0}
+                                    onClick={() => setCurrentPlayIndex((index) => Math.max(0, index - 1))}
+                                >
+                                    Previous Play
+                                </Button>
+
+                                <div className="text-sm text-muted-foreground">
+                                    {plays.length === 0
+                                        ? "No plays yet"
+                                        : `Play ${currentPlayIndex + 1} of ${plays.length}`}
+                                </div>
+
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={plays.length === 0 || currentPlayIndex >= plays.length - 1}
+                                    onClick={() =>
+                                        setCurrentPlayIndex((index) =>
+                                            Math.min(plays.length - 1, index + 1),
+                                        )
+                                    }
+                                >
+                                    Next Play
+                                </Button>
+
+                                <Button type="button" onClick={addPlay}>
+                                    Add Play
+                                </Button>
+
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    disabled={!currentPlay}
+                                    onClick={removeCurrentPlay}
+                                >
+                                    Remove Play
+                                </Button>
+                            </div>
+
+                            {!currentPlay ? (
+                                <div className="rounded-lg border bg-muted/50 p-4 text-sm text-muted-foreground">
+                                    No play selected. Add a play to begin.
+                                </div>
+                            ) : (
+                                <>
+
+
+                                    {/*
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     <div className="space-y-2">
                                         <Label>YouTube Start Time</Label>
@@ -767,149 +725,240 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                                 </div>
 */}
 
-                                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                                    <TimePickerYouTube
-                                        videoId={game.videoId}
-                                        time={currentPlay.youTubeStart}
-                                        label="Start Frame"
-                                        onPickTime={(time) =>
-                                            patchCurrentPlay({
-                                                youTubeStart: time,
-                                            })
-                                        }
-                                        key={"start"}
-                                    />
-
-                                    <TimePickerYouTube
-                                        videoId={game.videoId}
-                                        time={currentPlay.youTubeEnd}
-                                        label="End Frame"
-                                        onPickTime={(time) =>
-                                            patchCurrentPlay({
-                                                youTubeEnd: Math.max(
-                                                    time,
-                                                    currentPlay.youTubeStart + MIN_PLAY_DURATION_SECONDS,
-                                                ),
-                                            })
-                                        }
-                                        key={"end"}
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>Description</Label>
-                                    <Textarea
-                                        value={currentPlay.description}
-                                        onChange={(event) =>
-                                            patchCurrentPlay({
-                                                description: event.target.value,
-                                            })
-                                        }
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                                    <div className="space-y-2">
-                                        <Label>Play Type</Label>
-                                        <Select
-                                            value={currentPlay.playType}
-                                            onValueChange={(value: PlayType) =>
-                                                patchCurrentPlay({ playType: value })
+                                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                                        <TimePickerYouTube
+                                            videoId={game.videoId}
+                                            time={currentPlay.youTubeStart}
+                                            label="Start Frame"
+                                            onPickTime={(time) =>
+                                                patchCurrentPlay({
+                                                    youTubeStart: time,
+                                                })
                                             }
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="run">Run</SelectItem>
-                                                <SelectItem value="pass">Pass</SelectItem>
-                                                <SelectItem value="punt">Punt</SelectItem>
-                                                <SelectItem value="field_goal">Field Goal</SelectItem>
-                                                <SelectItem value="extra_point">Extra Point</SelectItem>
-                                                <SelectItem value="penalty">Penalty</SelectItem>
-                                                <SelectItem value="timeout">Timeout</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                            key={"start"}
+                                        />
+
+                                        <TimePickerYouTube
+                                            videoId={game.videoId}
+                                            time={currentPlay.youTubeEnd}
+                                            label="End Frame"
+                                            onPickTime={(time) =>
+                                                patchCurrentPlay({
+                                                    youTubeEnd: Math.max(
+                                                        time,
+                                                        currentPlay.youTubeStart + MIN_PLAY_DURATION_SECONDS,
+                                                    ),
+                                                })
+                                            }
+                                            key={"end"}
+                                        />
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label>Start Field Position</Label>
-                                        <Input
-                                            type="number"
-                                            value={currentPlay.startFieldPosition}
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-4 mbe-2">
+
+                                        <div className="space-y-2">
+                                            <Label>Quarter</Label>
+                                            <RadioGroup
+                                                value={String(currentPlay.quarter ?? 1)}
+                                                onValueChange={(value) => patchCurrentPlay({quarter: Number(value)})}
+                                                className="flex gap-4"
+                                            >
+                                                {[ 1, 2, 3, 4 ].map((q) => (
+                                                    <div key={q} className="flex items-center space-x-2">
+                                                        <RadioGroupItem value={String(q)} id={`q${q}`}/>
+                                                        <Label htmlFor={`q${q}`} className="cursor-pointer font-normal">
+                                                            {q}
+                                                        </Label>
+                                                    </div>
+                                                ))}
+                                            </RadioGroup>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label>Down</Label>
+                                            <RadioGroup
+                                                value={String(currentPlay.down ?? 1)}
+                                                onValueChange={(value) => patchCurrentPlay({down: Number(value)})}
+                                                className="flex gap-4"
+                                            >
+                                                {[ 1, 2, 3, 4 ].map((q) => (
+                                                    <div key={q} className="flex items-center space-x-2">
+                                                        <RadioGroupItem value={String(q)} id={`q${q}`}/>
+                                                        <Label htmlFor={`q${q}`} className="cursor-pointer font-normal">
+                                                            {q}
+                                                        </Label>
+                                                    </div>
+                                                ))}
+                                            </RadioGroup>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label>Distance</Label>
+                                            <Input
+                                                type="number"
+                                                value={currentPlay.yardsToGo}
+                                                onChange={(event) =>
+                                                    patchCurrentPlay({
+                                                        yardsToGo: Number(event.target.value),
+                                                    })
+                                                }
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label>Hash</Label>
+
+                                            <RadioGroup
+                                                value={currentPlay.hash}
+                                                onValueChange={(value: HashValue) =>
+                                                    patchCurrentPlay({hash: value})
+                                                }
+                                                className="flex gap-4"
+                                            >
+                                                {[ "left", "middle", "right" ].map((q) => (
+                                                    <div key={q} className="flex items-center space-x-2">
+                                                        <RadioGroupItem value={q} id={`q${q}`}/>
+                                                        <Label htmlFor={`q${q}`} className="cursor-pointer font-normal">
+                                                            {q}
+                                                        </Label>
+                                                    </div>
+                                                ))}
+                                            </RadioGroup>
+
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2 mbe-2">
+                                        <Label>Description</Label>
+                                        <Textarea
+                                            value={currentPlay.description}
                                             onChange={(event) =>
                                                 patchCurrentPlay({
-                                                    startFieldPosition: Number(event.target.value),
+                                                    description: event.target.value,
                                                 })
                                             }
                                         />
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label>End Field Position</Label>
-                                        <Input
-                                            type="number"
-                                            value={currentPlay.endFieldPosition}
-                                            onChange={(event) =>
-                                                patchCurrentPlay({
-                                                    endFieldPosition: Number(event.target.value),
-                                                })
-                                            }
-                                        />
-                                    </div>
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                                        <div className="space-y-2">
+                                            <Label>Play Type</Label>
+                                            <Select
+                                                value={currentPlay.playType}
+                                                onValueChange={(value: PlayType) =>
+                                                    patchCurrentPlay({playType: value})
+                                                }
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue/>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="run">Run</SelectItem>
+                                                    <SelectItem value="pass">Pass</SelectItem>
+                                                    <SelectItem value="punt">Punt</SelectItem>
+                                                    <SelectItem value="field_goal">Field Goal</SelectItem>
+                                                    <SelectItem value="extra_point">Extra Point</SelectItem>
+                                                    <SelectItem value="penalty">Penalty</SelectItem>
+                                                    <SelectItem value="timeout">Timeout</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
 
-                                    <div className="space-y-2">
-                                        <Label>Yards Gained</Label>
-                                        <Input
-                                            type="number"
-                                            value={currentPlay.yardsGained}
+                                        <div className="space-y-2">
+                                            <Label>Start Field Position</Label>
+                                            <Input
+                                                type="number"
+                                                value={currentPlay.startFieldPosition}
+                                                onChange={(event) =>
+                                                    patchCurrentPlay({
+                                                        startFieldPosition: Number(event.target.value),
+                                                    })
+                                                }
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label>End Field Position</Label>
+                                            <Input
+                                                type="number"
+                                                value={currentPlay.endFieldPosition}
+                                                onChange={(event) =>
+                                                    patchCurrentPlay({
+                                                        endFieldPosition: Number(event.target.value),
+                                                    })
+                                                }
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label>Yards Gained</Label>
+                                            <Input
+                                                type="number"
+                                                value={currentPlay.yardsGained}
                                                 readOnly
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                    <div className="space-y-2 md:col-span-2">
-                                        <Label>Penalty</Label>
-                                        <Input
-                                            value={currentPlay.penalty ?? ""}
-                                            onChange={(event) =>
-                                                patchCurrentPlay({
-                                                    penalty: event.target.value,
-                                                })
-                                            }
-                                        />
+                                            />
+                                        </div>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label>Penalty Yards</Label>
-                                        <Input
-                                            type="number"
-                                            value={currentPlay.penaltyYards ?? ""}
-                                            onChange={(event) =>
-                                                patchCurrentPlay({
-                                                    penaltyYards: event.target.value
-                                                        ? Number(event.target.value)
-                                                        : undefined,
-                                                })
-                                            }
-                                        />
-                                    </div>
-                                </div>
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
 
-                                <div className="flex justify-end">
-                                    <Button
-                                        type="button"
-                                        onClick={savePlays}
-                                        disabled={updatePlays.isPending}
-                                    >
-                                        {updatePlays.isPending ? "Saving..." : "Save Plays"}
-                                    </Button>
-                                </div>
-                            </>
-                        )}
-                    </CardContent>
-                </Card>
+                                        <div className="space-y-2 md:col-span-2">
+                                            <Label>Penalty</Label>
+                                            <Input
+                                                value={currentPlay.penalty ?? ""}
+                                                onChange={(event) =>
+                                                    patchCurrentPlay({
+                                                        penalty: event.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label>Penalty Yards</Label>
+                                            <Input
+                                                type="number"
+                                                value={currentPlay.penaltyYards ?? ""}
+                                                onChange={(event) =>
+                                                    patchCurrentPlay({
+                                                        penaltyYards: event.target.value
+                                                            ? Number(event.target.value)
+                                                            : undefined,
+                                                    })
+                                                }
+                                            />
+
+
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label>Nullify Play</Label>
+                                            <Checkbox
+                                                name="nullify-checkbox"
+                                                id="nullify-checkbox"
+                                                checked={currentPlay.nullifyPlay}
+                                                onCheckedChange={(checked) =>
+                                                    patchCurrentPlay({
+                                                        nullifyPlay: !!checked,
+                                                    })
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end">
+                                        <Button
+                                            type="button"
+                                            onClick={savePlays}
+                                            disabled={updatePlays.isPending}
+                                        >
+                                            {updatePlays.isPending ? "Saving..." : "Save Plays"}
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
+                        </CardContent>
+                    </Card>
                 </>
             )}
         </div>

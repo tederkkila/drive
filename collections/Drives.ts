@@ -185,16 +185,16 @@ export const Drives: CollectionConfig = {
 
                                         if (typeof start === 'number' && typeof end === 'number') {
 
-                                            console.log('start', start);
-                                            console.log('end', end);
+                                            // console.log('start', start);
+                                            // console.log('end', end);
 
                                             const absoluteStart = getAbsolutePosition(start, direction)
                                             const absoluteEnd = getAbsolutePosition(end, direction)
 
-                                            console.log('absoluteStart', absoluteStart);
-                                            console.log('absoluteEnd', absoluteEnd);
-                                            console.log('direction', direction);
-                                            console.log(calculateAbsoluteDriveDistance(absoluteStart, absoluteEnd, direction))
+                                            // console.log('absoluteStart', absoluteStart);
+                                            // console.log('absoluteEnd', absoluteEnd);
+                                            // console.log('direction', direction);
+                                            // console.log(calculateAbsoluteDriveDistance(absoluteStart, absoluteEnd, direction))
 
                                             return calculateAbsoluteDriveDistance(absoluteStart, absoluteEnd, direction);
 

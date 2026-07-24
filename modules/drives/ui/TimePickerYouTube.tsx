@@ -162,11 +162,11 @@ export const TimePickerYouTube = ({
         <Card>
             <CardHeader>
                 <CardTitle className="text-base">{label}</CardTitle>
-                <CardDescription>
-                    Scrub to the correct frame, then click “Use current time”.
-                </CardDescription>
+                {/*<CardDescription>*/}
+                {/*    Scrub to the correct frame, then click “Use current time”.*/}
+                {/*</CardDescription>*/}
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2 [--card-spacing:--spacing(2)]">
                 <YouTube
                     key={videoId}
                     videoId={videoId}
