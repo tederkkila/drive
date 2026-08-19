@@ -22,7 +22,13 @@ export const Users: CollectionConfig = {
   admin: {
     useAsTitle: 'email',
   },
-  auth: true,
+  auth: {
+    cookies: {
+      domain: process.env.PAYLOAD_COOKIE_DOMAIN || undefined,
+      sameSite: "Lax",
+      secure: process.env.NODE_ENV === "production",
+    },
+  },
   fields: [
     {
       name: "username",

@@ -3,7 +3,7 @@
 import React, {useState, useEffect, useTransition} from "react"
 import { ChevronRight, Search } from "lucide-react"
 
-import { VersionSwitcher } from "@/modules/games/ui/version-switcher"
+import { TeamSwitcher } from "@/modules/games/ui/team-switcher"
 import {
     Collapsible,
     CollapsibleContent,
@@ -29,10 +29,10 @@ import { Label } from "@/components/ui/label";
 import { useGameVideo } from "@/modules/games/ui/GameContext";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { Drive, Team } from "@/payload-types"
 
-// This is sample data.
 const data = {
-    versions: ["NZL"/*, "AUS U18"*/],
+    //versions: ["NZL"/*, "AUS U18"*/],
     navMain: [
         // {
         //     title: "Drive Number",
@@ -197,6 +197,17 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
     gameId: string;
 }
 
+function hasPopulatedPossessingTeam(
+    drive: Drive,
+): drive is Drive & { possessingTeam: Team; plays: NonNullable<Drive["plays"]> } {
+    return (
+        typeof drive.possessingTeam === "object" &&
+        drive.possessingTeam !== null &&
+        Array.isArray(drive.plays) &&
+        drive.plays.length > 0
+    );
+}
+
 export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
 
     const groupParsers = {
@@ -207,6 +218,7 @@ export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
                 shallow: false,
             })
             .withDefault(""),
+        team: parseAsString.withDefault(""),
         playType: parseAsArrayOf(parseAsString).withDefault([]),
         down: parseAsArrayOf(parseAsString).withDefault([]),
         distance: parseAsArrayOf(parseAsString).withDefault([]),
@@ -226,14 +238,52 @@ export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
 
     const trpc = useTRPC();
 
-    const { data: driveList = [], isLoading } = useQuery(
-            trpc.games.getDriveListForGame.queryOptions(
+    const { data: game, isLoading } = useQuery(
+            trpc.games.getGameWithDrives.queryOptions(
                 { gameId },
                 { enabled: !!gameId }
             )
     );
 
-    const driveIds = driveList.map((drive) => drive.id);
+    const driveList = game?.drives.map((drive) => ({
+        id: drive.id,
+        driveNumber: drive.driveNumber,
+    })) ?? [];
+
+    const teams = game ? [game.homeTeam, game.awayTeam] : [];
+
+    const teamDriveCounts = teams.reduce<Record<string, number>>((acc, team) => {
+        acc[team.id] = game?.drives.filter((drive) => {
+            if (typeof drive.possessingTeam !== "object" || drive.possessingTeam === null) {
+                return false;
+            }
+
+            return drive.possessingTeam.id === team.id;
+        }).length ?? 0;
+
+        return acc;
+    }, {});
+
+    const defaultTeamId = game?.drives
+        .filter(hasPopulatedPossessingTeam)
+        .toSorted((a, b) => a.plays[0].youTubeStart - b.plays[0].youTubeStart)
+        [0]?.possessingTeam.id;
+
+    const selectedTeamId = groupStates.team || defaultTeamId || teams[0]?.id || "";
+
+    const visibleDriveList = game?.drives
+        .filter((drive) => {
+            if (!selectedTeamId) return true;
+            if (typeof drive.possessingTeam !== "object" || drive.possessingTeam === null) return false;
+
+            return drive.possessingTeam.id === selectedTeamId;
+        })
+        .map((drive) => ({
+            id: drive.id,
+            driveNumber: drive.driveNumber,
+        })) ?? [];
+
+    const driveIds = visibleDriveList.map((drive) => drive.id);
     const allExpanded = driveIds.length > 0 && expandedDriveIds.length === driveIds.length;
 
     const urlExpandedDriveIndexes = groupStates.drive;
@@ -265,6 +315,13 @@ export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
         setLocalSearch(groupStates.search);
     }, [groupStates.search]);
 
+    useEffect(() => {
+        if (!defaultTeamId) return;
+        if (groupStates.team) return;
+
+        setGroupStates({ team: defaultTeamId });
+    }, [defaultTeamId, groupStates.team, setGroupStates]);
+
     const toggleAllDrives = () => {
         if (allExpanded) {
             setExpandedDriveIds([]);
@@ -294,7 +351,7 @@ export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
         (acc, [key, value]) => {
 
             //don't count the expandedDriveIds
-            if (key === 'drive' || key === 'playId') {
+            if (key === 'drive' || key === 'playId' || key === 'team') {
                 return acc;
             }
 
@@ -349,15 +406,30 @@ export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
         })
     }
 
+    const handleTeamChange = (teamId: string) => {
+        const shouldPauseVideo = groupStates.playId.trim() !== "";
 
+        setExpandedDriveIds([]);
+        setGroupStates({
+            team: teamId,
+            drive: null,
+            playId: null,
+        });
+
+        if (shouldPauseVideo) {
+            triggerPause();
+        }
+    }
 
     return (
         <Sidebar {...props}>
             <SidebarHeader>
 
-                <VersionSwitcher
-                    versions={data.versions}
-                    defaultVersion={data.versions[0]}
+                <TeamSwitcher
+                    teams={teams}
+                    selectedTeamId={selectedTeamId}
+                    onTeamChange={handleTeamChange}
+                    teamDriveCounts={teamDriveCounts}
                 />
 
                 <div className="px-4 py-2 border-b">

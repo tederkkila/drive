@@ -15,16 +15,26 @@ export const config = {
 
 export default async function proxy(req: NextRequest) {
     const url = req.nextUrl;
-    // Extract the hostname (e.g., "antonio.funroad.com" or "john.localhost:3000")
     const hostname = req.headers.get("host") || "";
 
     const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "";
+    const adminDomain = process.env.NEXT_PUBLIC_ADMIN_DOMAIN || "";
+
+    // console.log("hostname: ", hostname);
+    // console.log("rootDomain: ", rootDomain);
+    // console.log("adminDomain: ", adminDomain);
+
+    if (adminDomain && hostname === adminDomain) {
+        return NextResponse.next();
+    }
 
     if (hostname.endsWith(`.${rootDomain}`)) {
         const tenantSlug = hostname.replace(`.${rootDomain}`, "");
 
-        if (tenantSlug !== "www") {
-            return NextResponse.rewrite(new URL(`/tenants/${tenantSlug}${url.pathname}${url.search}`, req.url) as any);
+        if (tenantSlug && tenantSlug !== "www" && tenantSlug !== "drive") {
+            return NextResponse.rewrite(
+                new URL(`/tenants/${tenantSlug}${url.pathname}${url.search}`, req.url) as any
+            );
         }
     }
 

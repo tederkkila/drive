@@ -3,6 +3,8 @@ import { HydrateClient, prefetch, trpc } from "@/trpc/server";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { GameListView } from "@/modules/games/ui/GameListView";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface Props {
     params: Promise<{
@@ -30,6 +32,14 @@ const Page = async ({ params }: Props) => {
 
     return (
         <div className="flex flex-col gap-4">
+
+            <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold">Games</h1>
+                <Link href={`/games/new`}>
+                    <Button>New Game</Button>
+                </Link>
+            </div>
+
             <HydrateClient>
                 <ErrorBoundary fallback={<div>Error rendering content</div>}>
                     <Suspense>

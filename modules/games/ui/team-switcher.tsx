@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Check, ChevronsUpDown, GalleryVerticalEnd } from "lucide-react"
+import { Team } from "@/payload-types"
 
 import {
     DropdownMenu,
@@ -15,14 +16,21 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-export function VersionSwitcher({
-    versions,
-    defaultVersion,
-}: {
-    versions: string[]
-    defaultVersion: string
+const getTeamLabel = (team: Team) => `${team.abbreviation} ${team.level}`
+
+export function TeamSwitcher({
+        teams,
+        selectedTeamId,
+        onTeamChange,
+        teamDriveCounts,
+    }: {
+        teams: Team[]
+        selectedTeamId?: string
+        onTeamChange: (teamId: string) => void
+        teamDriveCounts?: Record<string, number>
 }) {
-    const [selectedVersion, setSelectedVersion] = React.useState(defaultVersion)
+
+    const selectedTeam = teams.find((team) => team.id === selectedTeamId) ?? teams[0]
 
     return (
         <SidebarMenu>
@@ -38,7 +46,7 @@ export function VersionSwitcher({
                             </div>
                             <div className="flex flex-col gap-0.5 leading-none">
                                 <span className="font-medium">Team</span>
-                                <span className="">{selectedVersion}</span>
+                                <span >{selectedTeam ? getTeamLabel(selectedTeam) : "Select team"}</span>
                             </div>
                             <ChevronsUpDown className="ml-auto" />
                         </SidebarMenuButton>
@@ -47,15 +55,20 @@ export function VersionSwitcher({
                         className="w-(--radix-dropdown-menu-trigger-width)"
                         align="start"
                     >
-                        {versions.map((version) => (
-                            <DropdownMenuItem
-                                key={version}
-                                onSelect={() => setSelectedVersion(version)}
-                            >
-                                v{version}{" "}
-                                {version === selectedVersion && <Check className="ml-auto" />}
-                            </DropdownMenuItem>
-                        ))}
+                        {teams.map((team) => {
+                            const hasDrives = (teamDriveCounts?.[team.id] ?? 0) > 0;
+
+                            return (
+                                <DropdownMenuItem
+                                    key={team.id}
+                                    onSelect={() => onTeamChange(team.id)}
+                                    className={!hasDrives ? "text-muted-foreground opacity-50" : undefined}
+                                >
+                                    {getTeamLabel(team)}
+                                    {team.id === selectedTeamId && <Check className="ml-auto" />}
+                                </DropdownMenuItem>
+                            )
+                        })}
                     </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarMenuItem>

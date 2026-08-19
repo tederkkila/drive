@@ -21,7 +21,8 @@ export const GameList = ({ tenantSlug }: GameListProps) => {
 
     //console.log("data", data)
 
-    if (data.docs?.length === 0) {
+  // TypeScript now successfully infers data.docs!
+  if (!data?.docs || data.docs.length === 0) {
         return (
             <div className="border border-black border-dashed flex items-center justify-center p-8 flex-col gap-y-4 bg-white w-full rounded-lg">
                 <CircleBackslashIcon />
@@ -36,7 +37,6 @@ export const GameList = ({ tenantSlug }: GameListProps) => {
             {data.docs.map((game) => (
                 <GameCard key={game.id} game={game} />
             ))}
-
 
         </div>
     )

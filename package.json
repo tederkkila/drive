@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
+    "@hookform/resolvers": "^5.4.0",
     "@payloadcms/db-mongodb": "^3.85.1",
     "@payloadcms/next": "^3.85.1",
     "@payloadcms/plugin-multi-tenant": "^3.85.1",
@@ -44,6 +45,7 @@
     "react": "19.2.4",
     "react-day-picker": "^10.0.1",
     "react-dom": "19.2.4",
+    "react-hook-form": "^7.81.0",
     "react-resizable-panels": "^4.11.2",
     "react-youtube": "^10.1.0",
     "recharts": "3.8.0",
