@@ -38,10 +38,12 @@ const gameFormSchema = z.object({
     date: z.string().min(1, "Date is required"),
     homeTeam: z.string().min(1, "Home team is required"),
     awayTeam: z.string().min(1, "Away team is required"),
-    homeScore: z.coerce.number().min(0, "Score must be 0 or greater"),
-    awayScore: z.coerce.number().min(0, "Score must be 0 or greater"),
-    videoId: z.string().min(1, "Video ID is required"),
+    homeScore: z.number().min(0, "Score must be 0 or greater"),
+    awayScore: z.number().min(0, "Score must be 0 or greater"),
+    videoId: z.string().regex(/^[a-zA-Z0-9_-]{11}$/, "Invalid YouTube video ID")
 });
+
+type GameFormValues = z.infer<typeof gameFormSchema>;
 
 interface NewGameFormProps {
     tenantSlug: string;
@@ -66,22 +68,21 @@ export function NewGameForm({ tenantSlug }: NewGameFormProps) {
 
     const createGame = useMutation(createGameOptions);
 
-  // FIX 2: Use z.infer instead of z.input to maintain consistent runtime typing
-  const form = useForm<z.infer<typeof gameFormSchema>>({
+    const form = useForm<GameFormValues>({
         resolver: zodResolver(gameFormSchema),
         defaultValues: {
-        name: "",
-        slug: "",
-        date: "",
-        homeTeam: "",
-        awayTeam: "",
-        homeScore: 0,
-        awayScore: 0,
-        videoId: "",
+            name: "",
+            slug: "",
+            date: "",
+            homeTeam: "",
+            awayTeam: "",
+            homeScore: 0,
+            awayScore: 0,
+            videoId: "",
         },
     });
 
-    const onSubmit = async (values: z.infer<typeof gameFormSchema>) => {
+    const onSubmit = async (values: GameFormValues) => {
         if (!tenant) {
             toast.error("Tenant not found");
             return;
@@ -124,7 +125,7 @@ export function NewGameForm({ tenantSlug }: NewGameFormProps) {
                                         placeholder="e.g., Week 1 vs Team Name"
                                         aria-invalid={fieldState.invalid}
                                         {...field}
-                                        onBlur={(e) => {
+                                        onBlur={() => {
                                             field.onBlur();
                                             if (!form.getValues("slug")) {
                                                 generateSlug();
@@ -248,9 +249,15 @@ export function NewGameForm({ tenantSlug }: NewGameFormProps) {
                                             id={field.name}
                                             type="number"
                                             aria-invalid={fieldState.invalid}
-                                            {...field}
+                                            name={field.name}
+                                            ref={field.ref}
+                                            onBlur={field.onBlur}
+                                            value={field.value}
+                                            onChange={(event) => {
+                                                field.onChange(Number(event.target.value));
+                                            }}
                                         />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                     </Field>
                                 )}
                             />
@@ -265,9 +272,15 @@ export function NewGameForm({ tenantSlug }: NewGameFormProps) {
                                             id={field.name}
                                             type="number"
                                             aria-invalid={fieldState.invalid}
-                                            {...field}
+                                            name={field.name}
+                                            ref={field.ref}
+                                            onBlur={field.onBlur}
+                                            value={field.value}
+                                            onChange={(event) => {
+                                                field.onChange(Number(event.target.value));
+                                            }}
                                         />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                     </Field>
                                 )}
                             />
