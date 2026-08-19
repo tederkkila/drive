@@ -252,6 +252,18 @@ export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
 
     const teams = game ? [game.homeTeam, game.awayTeam] : [];
 
+    const teamDriveCounts = teams.reduce<Record<string, number>>((acc, team) => {
+        acc[team.id] = game?.drives.filter((drive) => {
+            if (typeof drive.possessingTeam !== "object" || drive.possessingTeam === null) {
+                return false;
+            }
+
+            return drive.possessingTeam.id === team.id;
+        }).length ?? 0;
+
+        return acc;
+    }, {});
+
     const defaultTeamId = game?.drives
         .filter(hasPopulatedPossessingTeam)
         .toSorted((a, b) => a.plays[0].youTubeStart - b.plays[0].youTubeStart)
@@ -417,6 +429,7 @@ export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
                     teams={teams}
                     selectedTeamId={selectedTeamId}
                     onTeamChange={handleTeamChange}
+                    teamDriveCounts={teamDriveCounts}
                 />
 
                 <div className="px-4 py-2 border-b">

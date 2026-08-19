@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import Link from "next/link";
 import { Drive, Team } from "@/payload-types";
 import {
     Accordion,
@@ -6,6 +7,7 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion"
+import { Button } from "@/components/ui/button";
 import { DriveChartGraphic, DriveChartTriggerGraphic } from "@/modules/drives/ui/visx/DriveChartGraphic";
 import { ParentSize, /*useParentSize*/ } from "@visx/responsive";
 import { useGameVideo } from "@/modules/games/ui/GameContext";
@@ -26,9 +28,20 @@ function hasPopulatedPossessingTeam(
 
 interface DriveChartProps {
     drives: Drive[];
+    teams?: Team[];
+    isAuthenticated?: boolean;
+    editHref?: string;
 }
 
-export const DriveChart = ({ drives }: DriveChartProps) => {
+export const DriveChart = ({
+    drives,
+    teams = [],
+    isAuthenticated = false,
+    editHref,
+}: DriveChartProps) => {
+
+    console.log('isAuthenticated', isAuthenticated)
+    console.log('editHref', editHref)
 
     const {
         expandedDriveIds,
@@ -65,6 +78,11 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
 
             return drive.possessingTeam.id === selectedTeamId;
         });
+
+    const selectedTeam = teams.find((team) => team.id === selectedTeamId);
+    const selectedTeamName = selectedTeam
+        ? `${selectedTeam.abbreviation} ${selectedTeam.level}`
+        : "this team";
 
     const driveIds = validDrives.map((drive) => drive.id);
 
@@ -126,6 +144,26 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
     // console.log("parentRef", parentRef)
     // console.log("width", width)
     // console.log("height", height)
+
+    if (validDrives.length === 0) {
+        return (
+            <div className="flex h-full flex-col items-center justify-center gap-4 px-6 py-12 text-center">
+                <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">
+                        No drives available for {selectedTeamName}
+                    </p>
+                </div>
+
+                {isAuthenticated && editHref && (
+                    <Button asChild>
+                        <Link href={editHref} target={"_blank"}>
+                            Add a Drive
+                        </Link>
+                    </Button>
+                )}
+            </div>
+        )
+    }
 
     return (
         <div>

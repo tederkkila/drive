@@ -22,10 +22,12 @@ export function TeamSwitcher({
         teams,
         selectedTeamId,
         onTeamChange,
+        teamDriveCounts,
     }: {
         teams: Team[]
         selectedTeamId?: string
         onTeamChange: (teamId: string) => void
+        teamDriveCounts?: Record<string, number>
 }) {
 
     const selectedTeam = teams.find((team) => team.id === selectedTeamId) ?? teams[0]
@@ -53,15 +55,20 @@ export function TeamSwitcher({
                         className="w-(--radix-dropdown-menu-trigger-width)"
                         align="start"
                     >
-                        {teams.map((team) => (
-                            <DropdownMenuItem
-                                key={team.id}
-                                onSelect={() => onTeamChange(team.id)}
-                            >
-                                {getTeamLabel(team)}
-                                {team.id === selectedTeamId && <Check className="ml-auto" />}
-                            </DropdownMenuItem>
-                        ))}
+                        {teams.map((team) => {
+                            const hasDrives = (teamDriveCounts?.[team.id] ?? 0) > 0;
+
+                            return (
+                                <DropdownMenuItem
+                                    key={team.id}
+                                    onSelect={() => onTeamChange(team.id)}
+                                    className={!hasDrives ? "text-muted-foreground opacity-50" : undefined}
+                                >
+                                    {getTeamLabel(team)}
+                                    {team.id === selectedTeamId && <Check className="ml-auto" />}
+                                </DropdownMenuItem>
+                            )
+                        })}
                     </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarMenuItem>

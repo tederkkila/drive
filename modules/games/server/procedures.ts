@@ -17,6 +17,14 @@ const ensureGameHasPopulatedTeams = (game: Game): GameWithTeams => {
 };
 
 export const gamesRouter = createTRPCRouter({
+
+    getAuthStatus: baseProcedure.query(({ ctx }) => {
+        //console.log("ctx.user: ", ctx.user)
+        return {
+            isAuthenticated: Boolean(ctx.user),
+        };
+    }),
+
     createGame: adminProcedure
         .input(z.object({
             tenants: z.array(z.string()).min(1, "At least one tenant is required"),

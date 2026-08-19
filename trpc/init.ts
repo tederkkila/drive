@@ -40,10 +40,15 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
 // Base router and procedure helpers
 export const createTRPCRouter = t.router;
 export const createCallerFactory = t.createCallerFactory;
-export const baseProcedure = t.procedure.use(async ({ next }) => {
+export const baseProcedure = t.procedure.use(async ({ ctx, next }) => {
 
     const payload = await getPayload({ config });
-    return next({ ctx: { db: payload } });
+    return next({
+        ctx: {
+        db: payload,
+        isAdmin: Boolean(ctx.user),
+        }
+    });
 });
 
 export const adminProcedure = t.procedure.use(async ({ ctx, next }) => {
