@@ -19,7 +19,7 @@ export const GameList = ({ tenantSlug }: GameListProps) => {
         }
     ));
 
-    console.log("data", data)
+    //console.log("data", data)
 
   // TypeScript now successfully infers data.docs!
   if (!data?.docs || data.docs.length === 0) {

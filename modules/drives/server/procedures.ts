@@ -88,7 +88,7 @@ export const drivesRouter = createTRPCRouter({
         )
         .mutation(async ({ ctx, input }) => {
 
-            console.log("input: ", input)
+            //console.log("input: ", input)
 
             let existingDrives;
 

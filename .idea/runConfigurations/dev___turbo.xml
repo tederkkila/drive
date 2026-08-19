@@ -7,7 +7,7 @@
     </scripts>
     <arguments value="--turbo" />
     <node-interpreter value="$USER_HOME$/.bun/bin/bun" />
-    <package-manager value="bun" />
+    <package-manager value="C:\Users\Ted\.bun\bin\bun.exe" />
     <envs />
     <EXTENSION ID="com.intellij.javascript.debugger.execution.StartBrowserRunConfigurationExtension">
       <browser with-js-debugger="true" />

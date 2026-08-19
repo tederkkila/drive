@@ -30,7 +30,7 @@ export const gamesRouter = createTRPCRouter({
             videoId: z.string().min(1, "Video ID is required"),
         }))
         .mutation(async ({ ctx, input }) => {
-            console.log("input: ", input)
+            //console.log("input: ", input)
 
             // Extract the single tenant ID from your incoming array
             // The multi-tenant plugin typically expects a single string ID, not an array
