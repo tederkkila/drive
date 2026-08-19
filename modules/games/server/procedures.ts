@@ -80,26 +80,30 @@ export const gamesRouter = createTRPCRouter({
             //console.time("games.getDriveListForGame total");
             //console.time("drives query");
             const drivesData = await ctx.db.find({
-                collection: "drives",
-                depth: 0,
-                where: {
-                    game: {
-                        equals: input.gameId,
+                    collection: "drives",
+                    depth: 0,
+                    where: {
+                        game: {
+                            equals: input.gameId,
+                        },
                     },
-                },
-                sort: "driveNumber",
-                limit: 100,
-                pagination: false,
-                select: {
-                    id: true,
-                    driveNumber: true,
-                },
-            });
+                    sort: "driveNumber",
+                    limit: 100,
+                    pagination: false,
+                    select: {
+                        id: true,
+                        driveNumber: true,
+                        possessingTeam: true,
+                    },
+                });
             //console.timeEnd("drives query");
 
             return drivesData.docs.map((drive) => ({
                 id: drive.id,
                 driveNumber: drive.driveNumber,
+                possessingTeam: typeof drive.possessingTeam === "string"
+                    ? drive.possessingTeam
+                    : drive.possessingTeam?.id,
             }));
         }),
     getGameWithDrives:baseProcedure

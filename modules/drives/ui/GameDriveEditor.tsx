@@ -27,8 +27,10 @@ import { toast } from "sonner";
 import type { Drive, Game } from "@/payload-types";
 import { TimePickerYouTube } from "@/modules/drives/ui/TimePickerYouTube";
 import {
-    calculateAbsoluteDriveDistance, calculateEndSpotAbsolute,
-    getAbsolutePosition, getFootballSpot,
+    calculateAbsoluteDriveDistance,
+    calculateEndSpotAbsolute,
+    getAbsolutePosition,
+    getFootballSpot,
 } from "@/modules/drives/ui/fieldCalculations";
 
 type DriveDirection = "left" | "right";
@@ -105,17 +107,22 @@ const createEmptyPlay = (playNumber: number): EditablePlay => ({
     nullifyPlay: false,
 });
 
-
-
 export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
 
     const trpc = useTRPC();
     const queryClient = useQueryClient();
 
+    const teams = [
+        typeof game.homeTeam !== "string" ? game.homeTeam : undefined,
+        typeof game.awayTeam !== "string" ? game.awayTeam : undefined,
+    ].filter((team) => team !== undefined);
+
+    const [selectedTeamId, setSelectedTeamId] = useState<string>(teams[0]?.id ?? "");
     const [selectedDriveId, setSelectedDriveId] = useState<string>("");
     const [currentPlayIndex, setCurrentPlayIndex] = useState(0);
     const [plays, setPlays] = useState<EditablePlay[]>([]);
     const previousLoadedDriveIdRef = useRef<string>("");
+
     const [driveProperties, setDriveProperties] = useState<EditableDriveProperties>({
         driveNumber: 1,
         possessingTeam: "",
@@ -123,15 +130,6 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
         startFieldPosition: -25,
         result: "punt",
     });
-
-    /*useEffect(() => {
-        console.count("GameDriveEditor mounted");
-        console.log("GameDriveEditor props:", { gameId: game.id, tenantSlug });
-
-        return () => {
-            console.log("GameDriveEditor unmounted");
-        };
-    });*/
 
     const driveListQuery = useQuery(
         trpc.games.getDriveListForGame.queryOptions({
@@ -146,17 +144,25 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
         enabled: Boolean(selectedDriveId),
     });
 
+    const visibleDriveList = useMemo(() => {
+        return driveListQuery.data?.filter((drive) => {
+            if (!selectedTeamId) return true;
+
+            return drive.possessingTeam === selectedTeamId;
+        }) ?? [];
+    }, [driveListQuery.data, selectedTeamId]);
+
     const createDrive = useMutation(
         trpc.drives.createNextForGame.mutationOptions({
             onSuccess: async (drive) => {
                 toast.success(`Drive ${drive.driveNumber} created.`);
                 setSelectedDriveId(drive.id);
 
-                await queryClient.invalidateQueries(
-                    trpc.games.getDriveListForGame.queryFilter({
+                await queryClient.invalidateQueries({
+                    queryKey: trpc.games.getDriveListForGame.queryKey({
                         gameId: game.id,
                     }),
-                );
+                });
             },
             onError: (error) => {
                 toast.error(`Failed to create drive: ${error.message}`);
@@ -169,18 +175,18 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
             onSuccess: async () => {
                 toast.success("Drive properties saved.");
 
-                await queryClient.invalidateQueries(
-                    trpc.games.getDriveListForGame.queryFilter({
+                await queryClient.invalidateQueries({
+                    queryKey: trpc.games.getDriveListForGame.queryKey({
                         gameId: game.id,
                     }),
-                );
+                });
 
                 if (selectedDriveId) {
-                    await queryClient.invalidateQueries(
-                        trpc.drives.getOne.queryFilter({
+                    await queryClient.invalidateQueries({
+                        queryKey: trpc.drives.getOne.queryKey({
                             driveId: selectedDriveId,
                         }),
-                    );
+                    });
                 }
             },
             onError: (error) => {
@@ -195,11 +201,11 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                 toast.success("Plays saved.");
 
                 if (selectedDriveId) {
-                    await queryClient.invalidateQueries(
-                        trpc.drives.getOne.queryFilter({
+                    await queryClient.invalidateQueries({
+                        queryKey: trpc.drives.getOne.queryKey({
                             driveId: selectedDriveId,
                         }),
-                    );
+                    });
                 }
             },
             onError: (error) => {
@@ -209,12 +215,29 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
     );
 
     useEffect(() => {
-        const firstDriveId = driveListQuery.data?.[0]?.id;
+        const firstDriveId = visibleDriveList[0]?.id;
 
         if (!selectedDriveId && firstDriveId) {
             setSelectedDriveId(firstDriveId);
+            return;
         }
-    }, [driveListQuery.data, selectedDriveId]);
+
+        if (
+            selectedDriveId &&
+            visibleDriveList.length > 0 &&
+            !visibleDriveList.some((drive) => drive.id === selectedDriveId)
+        ) {
+            setSelectedDriveId(firstDriveId ?? "");
+            return;
+        }
+
+        if (visibleDriveList.length === 0 && selectedDriveId) {
+            setSelectedDriveId("");
+            setPlays([]);
+            setCurrentPlayIndex(0);
+            previousLoadedDriveIdRef.current = "";
+        }
+    }, [visibleDriveList, selectedDriveId]);
 
     useEffect(() => {
         const drive = selectedDriveQuery.data as Drive | undefined;
@@ -287,8 +310,8 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
     };
 
     const selectedDriveNumber = useMemo(() => {
-        return driveListQuery.data?.find((drive) => drive.id === selectedDriveId)?.driveNumber;
-    }, [driveListQuery.data, selectedDriveId]);
+        return visibleDriveList.find((drive) => drive.id === selectedDriveId)?.driveNumber;
+    }, [visibleDriveList, selectedDriveId]);
 
     const patchCurrentPlay = (patch: Partial<EditablePlay>) => {
         setPlays((current) =>
@@ -298,8 +321,8 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                 }
 
                 const nextPlay = {
-                        ...play,
-                        ...patch,
+                    ...play,
+                    ...patch,
                 };
 
                 if (
@@ -359,11 +382,19 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                         previousEndFieldPosition = previousPlay.startFieldPosition;
                     }
 
-                    //calculate new yardage
-                    const absoluteSpot = getAbsolutePosition(previousEndFieldPosition, driveProperties.direction);
-                    const absolutePenaltySpot = calculateEndSpotAbsolute(absoluteSpot, previousPlay.penaltyYards, driveProperties.direction);
-                    previousEndFieldPosition = getFootballSpot(absolutePenaltySpot, driveProperties.direction);
-
+                    const absoluteSpot = getAbsolutePosition(
+                        previousEndFieldPosition,
+                        driveProperties.direction,
+                    );
+                    const absolutePenaltySpot = calculateEndSpotAbsolute(
+                        absoluteSpot,
+                        previousPlay.penaltyYards,
+                        driveProperties.direction,
+                    );
+                    previousEndFieldPosition = getFootballSpot(
+                        absolutePenaltySpot,
+                        driveProperties.direction,
+                    );
                 }
             }
 
@@ -418,27 +449,27 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
     };
 
     const patchDriveProperties = (patch: Partial<EditableDriveProperties>) => {
-            setDriveProperties((current) => {
-                const nextDriveProperties = {
-            ...current,
-            ...patch,
-                };
+        setDriveProperties((current) => {
+            const nextDriveProperties = {
+                ...current,
+                ...patch,
+            };
 
-                if ("direction" in patch) {
-                    setPlays((currentPlays) =>
-                        currentPlays.map((play) => ({
-                            ...play,
-                            yardsGained: calculateYardsGained(
-                                play.startFieldPosition,
-                                play.endFieldPosition,
-                                nextDriveProperties.direction,
-                            ),
-                        })),
-                    );
-                }
+            if ("direction" in patch) {
+                setPlays((currentPlays) =>
+                    currentPlays.map((play) => ({
+                        ...play,
+                        yardsGained: calculateYardsGained(
+                            play.startFieldPosition,
+                            play.endFieldPosition,
+                            nextDriveProperties.direction,
+                        ),
+                    })),
+                );
+            }
 
-                return nextDriveProperties;
-            });
+            return nextDriveProperties;
+        });
     };
 
     const saveDriveProperties = () => {
@@ -453,13 +484,45 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
         });
     };
 
+    const handleSelectedTeamChange = (teamId: string) => {
+        setSelectedTeamId(teamId);
+        setSelectedDriveId("");
+        setPlays([]);
+        setCurrentPlayIndex(0);
+        previousLoadedDriveIdRef.current = "";
+    };
+
     return (
         <div className="space-y-6">
             <Card>
                 <CardHeader>
+                    <CardTitle>Team</CardTitle>
+                    <CardDescription>
+                        Select the team whose drives and plays you want to edit.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="w-full md:max-w-xs space-y-2">
+                    <Label>Selected Team</Label>
+                    <Select value={selectedTeamId} onValueChange={handleSelectedTeamChange}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select team"/>
+                        </SelectTrigger>
+                        <SelectContent>
+                            {teams.map((team) => (
+                                <SelectItem key={team.id} value={team.id}>
+                                    {team.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
                     <CardTitle>Drives</CardTitle>
                     <CardDescription>
-                        Select an existing drive or create the next drive for this game.
+                        Select an existing drive or create the next drive for the selected team.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4 md:flex-row md:items-end">
@@ -470,7 +533,7 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                                 <SelectValue placeholder="Select a drive"/>
                             </SelectTrigger>
                             <SelectContent>
-                                {driveListQuery.data?.map((drive) => (
+                                {visibleDriveList.map((drive) => (
                                     <SelectItem key={drive.id} value={drive.id}>
                                         Drive {drive.driveNumber}
                                     </SelectItem>
@@ -485,9 +548,10 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                             {
                                 gameId: game.id,
                                 tenantSlug,
+                                possessingTeamId: selectedTeamId,
                             }
                         )}
-                        disabled={createDrive.isPending}
+                        disabled={createDrive.isPending || !selectedTeamId}
                     >
                         {createDrive.isPending ? "Creating..." : "Create New Drive"}
                     </Button>
@@ -540,17 +604,11 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                                             <SelectValue placeholder="Select team"/>
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {typeof game.homeTeam !== "string" && (
-                                                <SelectItem value={game.homeTeam.id}>
-                                                    {game.homeTeam.name}
+                                            {teams.map((team) => (
+                                                <SelectItem key={team.id} value={team.id}>
+                                                    {team.name}
                                                 </SelectItem>
-                                            )}
-
-                                            {typeof game.awayTeam !== "string" && (
-                                                <SelectItem value={game.awayTeam.id}>
-                                                    {game.awayTeam.name}
-                                                </SelectItem>
-                                            )}
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -690,41 +748,6 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                                 </div>
                             ) : (
                                 <>
-
-
-                                    {/*
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <Label>YouTube Start Time</Label>
-                                        <Input
-                                            type="number"
-                                            step="1"
-                                            value={currentPlay.youTubeStart}
-                                            onChange={(event) =>
-                                                patchCurrentPlay({
-                                                    youTubeStart: Number(event.target.value),
-                                                })
-                                            }
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label>YouTube End Time</Label>
-                                        <Input
-                                            type="number"
-                                            step="1"
-                                            min={currentPlay.youTubeStart + MIN_PLAY_DURATION_SECONDS}
-                                            value={currentPlay.youTubeEnd}
-                                            onChange={(event) =>
-                                                patchCurrentPlay({
-                                                    youTubeEnd: Number(event.target.value),
-                                                })
-                                            }
-                                        />
-                                    </div>
-                                </div>
-*/}
-
                                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                                         <TimePickerYouTube
                                             videoId={game.videoId}
@@ -735,7 +758,7 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                                                     youTubeStart: time,
                                                 })
                                             }
-                                            key={"start"}
+                                            key="start"
                                         />
 
                                         <TimePickerYouTube
@@ -750,7 +773,7 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                                                     ),
                                                 })
                                             }
-                                            key={"end"}
+                                            key="end"
                                         />
                                     </div>
 
@@ -760,13 +783,13 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                                             <Label>Quarter</Label>
                                             <RadioGroup
                                                 value={String(currentPlay.quarter ?? 1)}
-                                                onValueChange={(value) => patchCurrentPlay({quarter: Number(value)})}
+                                                onValueChange={(value) => patchCurrentPlay({ quarter: Number(value) })}
                                                 className="flex gap-4"
                                             >
-                                                {[ 1, 2, 3, 4 ].map((q) => (
+                                                {[1, 2, 3, 4].map((q) => (
                                                     <div key={q} className="flex items-center space-x-2">
-                                                        <RadioGroupItem value={String(q)} id={`q${q}`}/>
-                                                        <Label htmlFor={`q${q}`} className="cursor-pointer font-normal">
+                                                        <RadioGroupItem value={String(q)} id={`quarter-${q}`}/>
+                                                        <Label htmlFor={`quarter-${q}`} className="cursor-pointer font-normal">
                                                             {q}
                                                         </Label>
                                                     </div>
@@ -778,13 +801,13 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                                             <Label>Down</Label>
                                             <RadioGroup
                                                 value={String(currentPlay.down ?? 1)}
-                                                onValueChange={(value) => patchCurrentPlay({down: Number(value)})}
+                                                onValueChange={(value) => patchCurrentPlay({ down: Number(value) })}
                                                 className="flex gap-4"
                                             >
-                                                {[ 1, 2, 3, 4 ].map((q) => (
+                                                {[1, 2, 3, 4].map((q) => (
                                                     <div key={q} className="flex items-center space-x-2">
-                                                        <RadioGroupItem value={String(q)} id={`q${q}`}/>
-                                                        <Label htmlFor={`q${q}`} className="cursor-pointer font-normal">
+                                                        <RadioGroupItem value={String(q)} id={`down-${q}`}/>
+                                                        <Label htmlFor={`down-${q}`} className="cursor-pointer font-normal">
                                                             {q}
                                                         </Label>
                                                     </div>
@@ -807,24 +830,22 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
 
                                         <div className="space-y-2">
                                             <Label>Hash</Label>
-
                                             <RadioGroup
                                                 value={currentPlay.hash}
                                                 onValueChange={(value: HashValue) =>
-                                                    patchCurrentPlay({hash: value})
+                                                    patchCurrentPlay({ hash: value })
                                                 }
                                                 className="flex gap-4"
                                             >
-                                                {[ "left", "middle", "right" ].map((q) => (
-                                                    <div key={q} className="flex items-center space-x-2">
-                                                        <RadioGroupItem value={q} id={`q${q}`}/>
-                                                        <Label htmlFor={`q${q}`} className="cursor-pointer font-normal">
-                                                            {q}
+                                                {["left", "middle", "right"].map((hash) => (
+                                                    <div key={hash} className="flex items-center space-x-2">
+                                                        <RadioGroupItem value={hash} id={`hash-${hash}`}/>
+                                                        <Label htmlFor={`hash-${hash}`} className="cursor-pointer font-normal">
+                                                            {hash}
                                                         </Label>
                                                     </div>
                                                 ))}
                                             </RadioGroup>
-
                                         </div>
                                     </div>
 
@@ -846,7 +867,7 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                                             <Select
                                                 value={currentPlay.playType}
                                                 onValueChange={(value: PlayType) =>
-                                                    patchCurrentPlay({playType: value})
+                                                    patchCurrentPlay({ playType: value })
                                                 }
                                             >
                                                 <SelectTrigger>
@@ -927,8 +948,6 @@ export function GameDriveEditor({ game, tenantSlug }: GameDriveEditorProps) {
                                                     })
                                                 }
                                             />
-
-
                                         </div>
 
                                         <div className="space-y-2">
