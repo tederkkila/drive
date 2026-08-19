@@ -20,21 +20,13 @@ const getTeamLabel = (team: Team) => `${team.abbreviation} ${team.level}`
 
 export function TeamSwitcher({
         teams,
-        defaultTeamId,
+        selectedTeamId,
+        onTeamChange,
     }: {
         teams: Team[]
-        defaultTeamId?: string
+        selectedTeamId?: string
+        onTeamChange: (teamId: string) => void
 }) {
-
-    const [selectedTeamId, setSelectedTeamId] = React.useState(
-        defaultTeamId ?? teams[0]?.id ?? ""
-    )
-
-    React.useEffect(() => {
-        if (!defaultTeamId) return
-
-        setSelectedTeamId(defaultTeamId)
-    }, [defaultTeamId])
 
     const selectedTeam = teams.find((team) => team.id === selectedTeamId) ?? teams[0]
 
@@ -64,7 +56,7 @@ export function TeamSwitcher({
                         {teams.map((team) => (
                             <DropdownMenuItem
                                 key={team.id}
-                                onSelect={() => setSelectedTeamId(team.id)}
+                                onSelect={() => onTeamChange(team.id)}
                             >
                                 {getTeamLabel(team)}
                                 {team.id === selectedTeamId && <Check className="ml-auto" />}

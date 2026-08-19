@@ -218,6 +218,7 @@ export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
                 shallow: false,
             })
             .withDefault(""),
+        team: parseAsString.withDefault(""),
         playType: parseAsArrayOf(parseAsString).withDefault([]),
         down: parseAsArrayOf(parseAsString).withDefault([]),
         distance: parseAsArrayOf(parseAsString).withDefault([]),
@@ -256,7 +257,21 @@ export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
         .toSorted((a, b) => a.plays[0].youTubeStart - b.plays[0].youTubeStart)
         [0]?.possessingTeam.id;
 
-    const driveIds = driveList.map((drive) => drive.id);
+    const selectedTeamId = groupStates.team || defaultTeamId || teams[0]?.id || "";
+
+    const visibleDriveList = game?.drives
+        .filter((drive) => {
+            if (!selectedTeamId) return true;
+            if (typeof drive.possessingTeam !== "object" || drive.possessingTeam === null) return false;
+
+            return drive.possessingTeam.id === selectedTeamId;
+        })
+        .map((drive) => ({
+            id: drive.id,
+            driveNumber: drive.driveNumber,
+        })) ?? [];
+
+    const driveIds = visibleDriveList.map((drive) => drive.id);
     const allExpanded = driveIds.length > 0 && expandedDriveIds.length === driveIds.length;
 
     const urlExpandedDriveIndexes = groupStates.drive;
@@ -288,6 +303,13 @@ export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
         setLocalSearch(groupStates.search);
     }, [groupStates.search]);
 
+    useEffect(() => {
+        if (!defaultTeamId) return;
+        if (groupStates.team) return;
+
+        setGroupStates({ team: defaultTeamId });
+    }, [defaultTeamId, groupStates.team, setGroupStates]);
+
     const toggleAllDrives = () => {
         if (allExpanded) {
             setExpandedDriveIds([]);
@@ -317,7 +339,7 @@ export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
         (acc, [key, value]) => {
 
             //don't count the expandedDriveIds
-            if (key === 'drive' || key === 'playId') {
+            if (key === 'drive' || key === 'playId' || key === 'team') {
                 return acc;
             }
 
@@ -372,7 +394,20 @@ export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
         })
     }
 
+    const handleTeamChange = (teamId: string) => {
+        const shouldPauseVideo = groupStates.playId.trim() !== "";
 
+        setExpandedDriveIds([]);
+        setGroupStates({
+            team: teamId,
+            drive: null,
+            playId: null,
+        });
+
+        if (shouldPauseVideo) {
+            triggerPause();
+        }
+    }
 
     return (
         <Sidebar {...props}>
@@ -380,7 +415,8 @@ export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
 
                 <TeamSwitcher
                     teams={teams}
-                    defaultTeamId={defaultTeamId}
+                    selectedTeamId={selectedTeamId}
+                    onTeamChange={handleTeamChange}
                 />
 
                 <div className="px-4 py-2 border-b">

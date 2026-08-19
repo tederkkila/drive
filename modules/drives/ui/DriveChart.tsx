@@ -49,11 +49,23 @@ export const DriveChart = ({ drives }: DriveChartProps) => {
         parseAsString.withDefault("")
     );
 
+    const [selectedTeamId] = useQueryState(
+        "team",
+        parseAsString.withDefault("")
+    );
+
     if (!drives || drives.length === 0) return (
         <div>No drives found</div>
     )
 
-    const validDrives = drives.filter(hasPopulatedPossessingTeam);
+    const validDrives = drives
+        .filter(hasPopulatedPossessingTeam)
+        .filter((drive) => {
+            if (!selectedTeamId) return true;
+
+            return drive.possessingTeam.id === selectedTeamId;
+        });
+
     const driveIds = validDrives.map((drive) => drive.id);
 
     const getDriveNumbersFromIds = (ids: string[]) => {
