@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Check, ChevronsUpDown, GalleryVerticalEnd } from "lucide-react"
+import { Team } from "@/payload-types"
 
 import {
     DropdownMenu,
@@ -15,14 +16,27 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-export function VersionSwitcher({
-    versions,
-    defaultVersion,
-}: {
-    versions: string[]
-    defaultVersion: string
+const getTeamLabel = (team: Team) => `${team.abbreviation} ${team.level}`
+
+export function TeamSwitcher({
+        teams,
+        defaultTeamId,
+    }: {
+        teams: Team[]
+        defaultTeamId?: string
 }) {
-    const [selectedVersion, setSelectedVersion] = React.useState(defaultVersion)
+
+    const [selectedTeamId, setSelectedTeamId] = React.useState(
+        defaultTeamId ?? teams[0]?.id ?? ""
+    )
+
+    React.useEffect(() => {
+        if (!defaultTeamId) return
+
+        setSelectedTeamId(defaultTeamId)
+    }, [defaultTeamId])
+
+    const selectedTeam = teams.find((team) => team.id === selectedTeamId) ?? teams[0]
 
     return (
         <SidebarMenu>
@@ -38,7 +52,7 @@ export function VersionSwitcher({
                             </div>
                             <div className="flex flex-col gap-0.5 leading-none">
                                 <span className="font-medium">Team</span>
-                                <span className="">{selectedVersion}</span>
+                                <span >{selectedTeam ? getTeamLabel(selectedTeam) : "Select team"}</span>
                             </div>
                             <ChevronsUpDown className="ml-auto" />
                         </SidebarMenuButton>
@@ -47,13 +61,13 @@ export function VersionSwitcher({
                         className="w-(--radix-dropdown-menu-trigger-width)"
                         align="start"
                     >
-                        {versions.map((version) => (
+                        {teams.map((team) => (
                             <DropdownMenuItem
-                                key={version}
-                                onSelect={() => setSelectedVersion(version)}
+                                key={team.id}
+                                onSelect={() => setSelectedTeamId(team.id)}
                             >
-                                v{version}{" "}
-                                {version === selectedVersion && <Check className="ml-auto" />}
+                                {getTeamLabel(team)}
+                                {team.id === selectedTeamId && <Check className="ml-auto" />}
                             </DropdownMenuItem>
                         ))}
                     </DropdownMenuContent>

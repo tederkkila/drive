@@ -3,7 +3,7 @@
 import React, {useState, useEffect, useTransition} from "react"
 import { ChevronRight, Search } from "lucide-react"
 
-import { VersionSwitcher } from "@/modules/games/ui/version-switcher"
+import { TeamSwitcher } from "@/modules/games/ui/team-switcher"
 import {
     Collapsible,
     CollapsibleContent,
@@ -29,10 +29,10 @@ import { Label } from "@/components/ui/label";
 import { useGameVideo } from "@/modules/games/ui/GameContext";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { Drive, Team } from "@/payload-types"
 
-// This is sample data.
 const data = {
-    versions: ["NZL"/*, "AUS U18"*/],
+    //versions: ["NZL"/*, "AUS U18"*/],
     navMain: [
         // {
         //     title: "Drive Number",
@@ -197,6 +197,17 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
     gameId: string;
 }
 
+function hasPopulatedPossessingTeam(
+    drive: Drive,
+): drive is Drive & { possessingTeam: Team; plays: NonNullable<Drive["plays"]> } {
+    return (
+        typeof drive.possessingTeam === "object" &&
+        drive.possessingTeam !== null &&
+        Array.isArray(drive.plays) &&
+        drive.plays.length > 0
+    );
+}
+
 export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
 
     const groupParsers = {
@@ -226,12 +237,24 @@ export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
 
     const trpc = useTRPC();
 
-    const { data: driveList = [], isLoading } = useQuery(
-            trpc.games.getDriveListForGame.queryOptions(
+    const { data: game, isLoading } = useQuery(
+            trpc.games.getGameWithDrives.queryOptions(
                 { gameId },
                 { enabled: !!gameId }
             )
     );
+
+    const driveList = game?.drives.map((drive) => ({
+        id: drive.id,
+        driveNumber: drive.driveNumber,
+    })) ?? [];
+
+    const teams = game ? [game.homeTeam, game.awayTeam] : [];
+
+    const defaultTeamId = game?.drives
+        .filter(hasPopulatedPossessingTeam)
+        .toSorted((a, b) => a.plays[0].youTubeStart - b.plays[0].youTubeStart)
+        [0]?.possessingTeam.id;
 
     const driveIds = driveList.map((drive) => drive.id);
     const allExpanded = driveIds.length > 0 && expandedDriveIds.length === driveIds.length;
@@ -355,9 +378,9 @@ export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
         <Sidebar {...props}>
             <SidebarHeader>
 
-                <VersionSwitcher
-                    versions={data.versions}
-                    defaultVersion={data.versions[0]}
+                <TeamSwitcher
+                    teams={teams}
+                    defaultTeamId={defaultTeamId}
                 />
 
                 <div className="px-4 py-2 border-b">
