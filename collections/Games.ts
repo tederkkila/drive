@@ -1,9 +1,41 @@
 import type { CollectionConfig } from 'payload'
+import { revalidateTag } from "next/cache";
+import { gameCacheTags } from "@/modules/games/server/cache-tags";
 
 export const Games: CollectionConfig = {
     slug: 'games',
     admin: {
         useAsTitle: "name",
+    },
+    hooks: {
+        afterChange: [
+            ({ doc }) => {
+                revalidateTag(gameCacheTags.game(doc.id));
+                revalidateTag(gameCacheTags.gameWithDrives(doc.id));
+
+                if (Array.isArray(doc.tenants)) {
+                    doc.tenants.forEach((tenant) => {
+                        if (typeof tenant === "object" && tenant?.slug) {
+                            revalidateTag(gameCacheTags.tenantGames(tenant.slug));
+                        }
+                    });
+                }
+            },
+        ],
+        afterDelete: [
+            ({ doc }) => {
+                revalidateTag(gameCacheTags.game(doc.id));
+                revalidateTag(gameCacheTags.gameWithDrives(doc.id));
+
+                if (Array.isArray(doc.tenants)) {
+                    doc.tenants.forEach((tenant) => {
+                        if (typeof tenant === "object" && tenant?.slug) {
+                            revalidateTag(gameCacheTags.tenantGames(tenant.slug));
+                        }
+                    });
+                }
+            },
+        ],
     },
     defaultPopulate: {
         id: true,

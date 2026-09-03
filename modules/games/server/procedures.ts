@@ -1,7 +1,11 @@
 import z from "zod";
 import { TRPCError } from "@trpc/server";
+import { unstable_cache } from "next/cache";
+import { getPayload } from "payload";
+import config from "@/payload.config";
 import { Drive, Game } from "@/payload-types";
 import { GameWithTeamsWithDrives, GameWithTeams } from "@/modules/games/games"
+import { gameCacheTags } from "@/modules/games/server/cache-tags";
 
 import { adminProcedure, baseProcedure, createTRPCRouter } from "@/trpc/init";
 
@@ -15,6 +19,171 @@ const ensureGameHasPopulatedTeams = (game: Game): GameWithTeams => {
 
     return game as GameWithTeams;
 };
+
+const getCachedDriveListForGame = async (gameId: string) =>
+    unstable_cache(
+        async () => {
+            const payload = await getPayload({ config });
+
+            const drivesData = await payload.find({
+                collection: "drives",
+                depth: 0,
+                where: {
+                    game: {
+                        equals: gameId,
+                    },
+                },
+                sort: "driveNumber",
+                limit: 100,
+                pagination: false,
+                select: {
+                    id: true,
+                    driveNumber: true,
+                    possessingTeam: true,
+                },
+            });
+
+            return drivesData.docs.map((drive) => ({
+                id: drive.id,
+                driveNumber: drive.driveNumber,
+                possessingTeam: typeof drive.possessingTeam === "string"
+                    ? drive.possessingTeam
+                    : drive.possessingTeam?.id,
+            }));
+        },
+        ["games", "drive-list", gameId],
+        {
+            tags: [gameCacheTags.gameDrives(gameId)],
+            revalidate: 60 * 60,
+        },
+    )();
+
+const getCachedGameWithDrives = async (gameId: string) =>
+    unstable_cache(
+        async () => {
+            const payload = await getPayload({ config });
+
+            const gamesData = await payload.find({
+                collection: "games",
+                depth: 1,
+                where: {
+                    id: {
+                        equals: gameId,
+                    },
+                },
+                limit: 1,
+                pagination: false,
+            });
+
+            const game: Game = gamesData.docs[0];
+
+            if (!game) {
+                throw new TRPCError({ code: "NOT_FOUND", message: "Game not found" });
+            }
+
+            const gameWithTeams = ensureGameHasPopulatedTeams(game);
+
+            const drivesData = await payload.find({
+                collection: "drives",
+                depth: 1,
+                where: {
+                    game: {
+                        equals: gameId,
+                    },
+                },
+                sort: "driveNumber",
+                limit: 100,
+                pagination: false,
+            });
+
+            if (!drivesData) {
+                throw new TRPCError({ code: "NOT_FOUND", message: "No Drives Found" });
+            }
+
+            const gameWithDrives: GameWithTeamsWithDrives = {
+                ...gameWithTeams,
+                drives: drivesData.docs as Drive[],
+            };
+
+            return gameWithDrives;
+        },
+        ["games", "game-with-drives", gameId],
+        {
+            tags: [
+                gameCacheTags.game(gameId),
+                gameCacheTags.gameWithDrives(gameId),
+                gameCacheTags.gameDrives(gameId),
+            ],
+            revalidate: 60 * 60,
+        },
+    )();
+
+const getCachedGame = async (gameId: string) =>
+    unstable_cache(
+        async () => {
+            const payload = await getPayload({ config });
+
+            const gamesData = await payload.find({
+                collection: "games",
+                depth: 1,
+                where: {
+                    id: {
+                        equals: gameId,
+                    },
+                },
+                limit: 1,
+                pagination: false,
+            });
+
+            const game = gamesData.docs[0];
+
+            if (!game) {
+                throw new TRPCError({ code: "NOT_FOUND", message: "Game not found" });
+            }
+
+            return ensureGameHasPopulatedTeams(game);
+        },
+        ["games", "game", gameId],
+        {
+            tags: [gameCacheTags.game(gameId)],
+            revalidate: 60 * 60,
+        },
+    )();
+
+const getCachedGamesForTenant = async (tenantSlug: string, limit: number) =>
+    unstable_cache(
+        async () => {
+            const payload = await getPayload({ config });
+
+            const gamesData = await payload.find({
+                collection: "games",
+                depth: 2,
+                where: {
+                    "tenants.slug": {
+                        in: tenantSlug,
+                    },
+                },
+                sort: "-date",
+                limit,
+                pagination: false,
+            });
+
+            if (!gamesData) {
+                throw new TRPCError({ code: "NOT_FOUND", message: "No Games Found" });
+            }
+
+            return {
+                ...gamesData,
+                docs: gamesData.docs.map(ensureGameHasPopulatedTeams),
+            };
+        },
+        ["games", "tenant-games", tenantSlug, String(limit)],
+        {
+            tags: [gameCacheTags.tenantGames(tenantSlug)],
+            revalidate: 60 * 60,
+        },
+    )();
+
 
 export const gamesRouter = createTRPCRouter({
 
@@ -75,6 +244,41 @@ export const gamesRouter = createTRPCRouter({
         .input(z.object({
             gameId: z.string(),
         }))
+        .query(async ({ input }) => {
+            return getCachedDriveListForGame(input.gameId);
+        }),
+
+    getGameWithDrives: baseProcedure
+        .input(z.object({
+            gameId: z.string(),
+        }))
+        .query(async ({ input }) => {
+            return getCachedGameWithDrives(input.gameId);
+        }),
+
+    getOne: baseProcedure
+        .input(z.object({
+            gameId: z.string(),
+        }))
+        .query(async ({ input }) => {
+            return getCachedGame(input.gameId);
+        }),
+
+    getMany: baseProcedure
+        .input(
+            z.object({
+                tenantSlug: z.string(),
+                limit: z.number().optional(),
+            }),
+        )
+        .query(async ({ input }) => {
+            return getCachedGamesForTenant(input.tenantSlug, input.limit ?? 10);
+        }),
+
+    /*getDriveListForGame: baseProcedure
+        .input(z.object({
+            gameId: z.string(),
+        }))
         .query(async ({ ctx, input }) => {
 
             //console.time("games.getDriveListForGame total");
@@ -106,6 +310,7 @@ export const gamesRouter = createTRPCRouter({
                     : drive.possessingTeam?.id,
             }));
         }),
+
     getGameWithDrives:baseProcedure
         .input(z.object({
             gameId: z.string(),
@@ -168,6 +373,7 @@ export const gamesRouter = createTRPCRouter({
             return gameWithDrives;
 
         }),
+
     getOne:baseProcedure
         .input(z.object({
             gameId: z.string(),
@@ -196,6 +402,7 @@ export const gamesRouter = createTRPCRouter({
             return ensureGameHasPopulatedTeams(game);
 
         }),
+
     getMany: baseProcedure
         .input(
             z.object({
@@ -228,5 +435,5 @@ export const gamesRouter = createTRPCRouter({
                 ...gamesData,
                 docs: gamesData.docs.map(ensureGameHasPopulatedTeams),
             };
-        }),
+        }),*/
 });
