@@ -33,17 +33,23 @@ const Page = async ({ params }: Props) => {
 
     const game = await caller.games.getOne({ gameId });
 
-    prefetch(
-        trpc.games.getDriveListForGame.queryOptions({
-            gameId: gameId,
-        })
-    );
-
-    prefetch(
-        trpc.games.getGameWithDrives.queryOptions({
-            gameId: gameId,
-        })
-    );
+    await Promise.all([
+        prefetch(
+            trpc.games.getDriveListForGame.queryOptions({
+                gameId,
+            }),
+        ),
+        prefetch(
+            trpc.games.getGameWithDrives.queryOptions(
+                { gameId },
+                {
+                    staleTime: 30 * 60 * 1000,
+                    gcTime: 60 * 60 * 1000,
+                    refetchOnWindowFocus: false,
+                },
+            ),
+        ),
+    ]);
 
     return (
         <GameProvider>

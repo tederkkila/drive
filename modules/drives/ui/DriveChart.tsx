@@ -40,8 +40,8 @@ export const DriveChart = ({
     editHref,
 }: DriveChartProps) => {
 
-    console.log('isAuthenticated', isAuthenticated)
-    console.log('editHref', editHref)
+    // console.log('isAuthenticated', isAuthenticated)
+    // console.log('editHref', editHref)
 
     const {
         expandedDriveIds,

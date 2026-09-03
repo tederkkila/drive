@@ -14,20 +14,20 @@ interface Props {
 const Page = async ({ params }: Props) => {
     const { tenantSlug } = await params;
 
-    prefetch(
-        trpc.tenants.getOne.queryOptions({
-            tenantSlug: tenantSlug,
-        })
-    );
+    await Promise.all([
+        prefetch(
+            trpc.tenants.getOne.queryOptions({
+                tenantSlug: tenantSlug,
+            })
+        ),
 
-    prefetch(
-        trpc.games.getMany.queryOptions({
-            tenantSlug: tenantSlug,
-            limit: 10,
-        })
-    );
-
-
+        prefetch(
+            trpc.games.getMany.queryOptions({
+                tenantSlug: tenantSlug,
+                limit: 10,
+            })
+        ),
+    ]);
 
     return (
         <div className="flex flex-col ">

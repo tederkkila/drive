@@ -241,7 +241,12 @@ export function AppSidebar({ gameId, ...props }: AppSidebarProps) {
     const { data: game, isLoading } = useQuery(
             trpc.games.getGameWithDrives.queryOptions(
                 { gameId },
-                { enabled: !!gameId }
+                {
+                    enabled: !!gameId,
+                    staleTime: 30 * 60 * 1000,
+                    gcTime: 60 * 60 * 1000,
+                    refetchOnWindowFocus: false,
+                },
             )
     );
 

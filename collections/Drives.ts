@@ -1,8 +1,24 @@
 import type { CollectionConfig, Field } from 'payload'
+import { revalidateTag } from "next/cache";
+import { gameCacheTags } from "@/modules/games/server/cache-tags";
 import {
     getAbsolutePosition,
     calculateAbsoluteDriveDistance
 } from "@/modules/drives/ui/fieldCalculations";
+
+const getDriveGameId = (doc: Record<string, unknown>) => {
+    const game = doc.game;
+
+    if (typeof game === "string") {
+        return game;
+    }
+
+    if (typeof game === "object" && game !== null && "id" in game) {
+        return String(game.id);
+    }
+
+    return null;
+};
 
 export const Drives: CollectionConfig = {
     slug: 'drives',
@@ -10,7 +26,27 @@ export const Drives: CollectionConfig = {
         useAsTitle: "driveTitle",
     },
     hooks: {
-        // 2. Use a collection-level beforeChange hook to update the title on save
+        afterChange: [
+            ({ doc }) => {
+                const gameId = getDriveGameId(doc);
+
+                if (!gameId) return;
+
+                revalidateTag(gameCacheTags.gameWithDrives(gameId), "max");
+                revalidateTag(gameCacheTags.gameDrives(gameId), "max");
+            },
+        ],
+        afterDelete: [
+            ({ doc }) => {
+                const gameId = getDriveGameId(doc);
+
+                if (!gameId) return;
+
+                revalidateTag(gameCacheTags.gameWithDrives(gameId), "max");
+                revalidateTag(gameCacheTags.gameDrives(gameId), "max");
+            },
+        ],
+        // Use a collection-level beforeChange hook to update the title on save
         beforeChange: [
             async ({ data, req }) => {
 

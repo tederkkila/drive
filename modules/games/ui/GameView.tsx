@@ -23,7 +23,16 @@ export const GameView = ({ gameId }: GameViewProps) => {
     const { videoId, setVideoId } = useGameVideo();
 
     const trpc = useTRPC();
-    const { data } = useSuspenseQuery(trpc.games.getGameWithDrives.queryOptions({ gameId: gameId }));
+    const { data } = useSuspenseQuery(
+        trpc.games.getGameWithDrives.queryOptions(
+            { gameId },
+            {
+                staleTime: 30 * 60 * 1000,
+                gcTime: 60 * 60 * 1000,
+                refetchOnWindowFocus: false,
+            },
+        ),
+    );
     const { data: authStatus } = useSuspenseQuery(trpc.games.getAuthStatus.queryOptions());
     const game: GameWithTeamsWithDrives = data;
 
