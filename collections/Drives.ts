@@ -32,8 +32,8 @@ export const Drives: CollectionConfig = {
 
                 if (!gameId) return;
 
-                revalidateTag(gameCacheTags.gameWithDrives(gameId));
-                revalidateTag(gameCacheTags.gameDrives(gameId));
+                revalidateTag(gameCacheTags.gameWithDrives(gameId), "max");
+                revalidateTag(gameCacheTags.gameDrives(gameId), "max");
             },
         ],
         afterDelete: [
@@ -42,8 +42,8 @@ export const Drives: CollectionConfig = {
 
                 if (!gameId) return;
 
-                revalidateTag(gameCacheTags.gameWithDrives(gameId));
-                revalidateTag(gameCacheTags.gameDrives(gameId));
+                revalidateTag(gameCacheTags.gameWithDrives(gameId), "max");
+                revalidateTag(gameCacheTags.gameDrives(gameId), "max");
             },
         ],
         // Use a collection-level beforeChange hook to update the title on save

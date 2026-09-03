@@ -1,6 +1,9 @@
 import type { CollectionConfig } from 'payload'
+import type { Tenant } from "@/payload-types";
 import { revalidateTag } from "next/cache";
 import { gameCacheTags } from "@/modules/games/server/cache-tags";
+
+type GameTenant = string | Tenant;
 
 export const Games: CollectionConfig = {
     slug: 'games',
@@ -10,13 +13,13 @@ export const Games: CollectionConfig = {
     hooks: {
         afterChange: [
             ({ doc }) => {
-                revalidateTag(gameCacheTags.game(doc.id));
-                revalidateTag(gameCacheTags.gameWithDrives(doc.id));
+                revalidateTag(gameCacheTags.game(doc.id), "max");
+                revalidateTag(gameCacheTags.gameWithDrives(doc.id), "max");
 
                 if (Array.isArray(doc.tenants)) {
-                    doc.tenants.forEach((tenant) => {
+                    doc.tenants.forEach((tenant: GameTenant) => {
                         if (typeof tenant === "object" && tenant?.slug) {
-                            revalidateTag(gameCacheTags.tenantGames(tenant.slug));
+                            revalidateTag(gameCacheTags.tenantGames(tenant.slug), "max");
                         }
                     });
                 }
@@ -24,13 +27,13 @@ export const Games: CollectionConfig = {
         ],
         afterDelete: [
             ({ doc }) => {
-                revalidateTag(gameCacheTags.game(doc.id));
-                revalidateTag(gameCacheTags.gameWithDrives(doc.id));
+                revalidateTag(gameCacheTags.game(doc.id), "max");
+                revalidateTag(gameCacheTags.gameWithDrives(doc.id), "max");
 
                 if (Array.isArray(doc.tenants)) {
-                    doc.tenants.forEach((tenant) => {
+                    doc.tenants.forEach((tenant: GameTenant) => {
                         if (typeof tenant === "object" && tenant?.slug) {
-                            revalidateTag(gameCacheTags.tenantGames(tenant.slug));
+                            revalidateTag(gameCacheTags.tenantGames(tenant.slug), "max");
                         }
                     });
                 }
